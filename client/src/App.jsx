@@ -1,20 +1,42 @@
 import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:5000");
 
 function App() {
   const [message, setMessage] = useState("");
+  const [receivedMessage, setReceivedMessage] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:5000")
-      .then((res) => res.json())
-      .then((data) => {
-        setMessage(data.message);
-      });
+    socket.on("receive-message", (data) => {
+      setReceivedMessage(data);
+    });
+
+    return () => {
+      socket.off("receive-message");
+    };
   }, []);
 
+  const sendMessage = () => {
+    socket.emit("send-message", message);
+  };
+
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
       <h1>Collaborative Code Editor</h1>
-      <p>{message}</p>
+
+      <input
+        type="text"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+      />
+
+      <button onClick={sendMessage}>
+        Send
+      </button>
+
+      <h2>Received:</h2>
+      <p>{receivedMessage}</p>
     </div>
   );
 }
