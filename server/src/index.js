@@ -29,10 +29,15 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("send-message", (data) => {
-    console.log(data);
+  socket.on("join-room", (room)=>{ //room is room ID
+    socket.join(room);
+    console.log(`User ${socket.id} joined room ${room}`);
+  })
 
-    socket.broadcast.emit("receive-message", data);
+  socket.on("send-message", ({ message, room }) => {
+    console.log(message);
+
+    socket.to(room).emit("receive-message", message);
   });
 
   socket.on("disconnect", () => {
