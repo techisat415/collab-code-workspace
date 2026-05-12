@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import Editor from "@monaco-editor/react";
 
 const socket = io("http://localhost:5000");
 
@@ -56,11 +57,22 @@ function App() {
 
       <br /><br />
 
-      <textarea
+      <Editor
+        height="400px"
+        defaultLanguage="javascript"
         value={code}
-        onChange={handleCodeChange}
-        rows={20}
-        cols={80}
+        onChange={(value) => {
+          
+          const newCode = value || "";
+          setCode(newCode);
+        
+          socket.emit("code-edit", {
+            room,
+            code: newCode,
+          });
+        }
+          
+        }
         placeholder="Start typing..."
       />
     </div>
