@@ -4,29 +4,39 @@ import { io } from "socket.io-client";
 const socket = io("http://localhost:5000");
 
 function App() {
-  const [room, setRoom] = useState("");
-  const [message, setMessage] = useState("");
-  const [receivedMessage, setReceivedMessage] = useState("");
-  //const [variableName, setVariableName] = useState(initialValue);
+  const [room, setRoomId] = useState("");
+  const [code, setCode] = useState("");
 
   useEffect(() => {
-    socket.on("receive-message", (data) => {
-      setReceivedMessage(data);
+    socket.on("receive-code-edit", (incomingCode) => {
+      setCode(incomingCode);
+    });
+
+    socket.on("sync-code", (existingCode)=>{
+      setCode(existingCode);
     });
 
     return () => {
-      socket.off("receive-message");
+      socket.off("receive-code-edit");
+      socket.off("sync-code");
     };
+    
   }, []);
 
   const joinRoom = () => {
-    if (room) {
-      socket.emit("join-room", room);
-    }
+    socket.emit("join-room", room);
   };
 
-  const sendMessage = () => {
-    socket.emit("send-message", { message, room });
+  const handleCodeChange = (e) => {
+    if(!room) return alert("Please enter a room ID to join");
+    const newCode = e.target.value;
+
+    setCode(newCode);
+
+    socket.emit("code-edit", {
+      room,
+      code: newCode,
+    });
   };
 
   return (
@@ -35,29 +45,24 @@ function App() {
 
       <input
         type="text"
+        placeholder="Room ID"
         value={room}
-        onChange={(e) => setRoom(e.target.value)}
-        placeholder="Enter room ID"
+        onChange={(e) => setRoomId(e.target.value)}
       />
 
       <button onClick={joinRoom}>
         Join Room
       </button>
 
-      <br/> <br/>
+      <br /><br />
 
-      <input
-        type="text"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
+      <textarea
+        value={code}
+        onChange={handleCodeChange}
+        rows={20}
+        cols={80}
+        placeholder="Start typing..."
       />
-
-      <button onClick={sendMessage}>
-        Send
-      </button>
-
-      <h2>Received:</h2>
-      <p>{receivedMessage}</p>
     </div>
   );
 }

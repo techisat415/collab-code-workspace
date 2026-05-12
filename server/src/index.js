@@ -18,6 +18,7 @@ app.get("/", (req, res) => {
 });
 
 const server = http.createServer(app);
+const roomCode = {};
 
 const io = new Server(server, {
   cors: {
@@ -31,13 +32,21 @@ io.on("connection", (socket) => {
 
   socket.on("join-room", (room)=>{ //room is room ID
     socket.join(room);
+
+    if(roomCode[room]){
+      socket.emit("sync-code", roomCode[room]);
+    }
+
     console.log(`User ${socket.id} joined room ${room}`);
-  })
+  });
 
-  socket.on("send-message", ({ message, room }) => {
-    console.log(message);
+  socket.on("code-edit", ({ code, room }) => {
 
-    socket.to(room).emit("receive-message", message);
+    roomCode[room] = code;
+    
+    console.log(code, room);
+
+    socket.to(room).emit("receive-code-edit", code);
   });
 
   socket.on("disconnect", () => {
