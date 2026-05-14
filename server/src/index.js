@@ -30,23 +30,23 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("join-room", (room)=>{ //room is room ID
-    socket.join(room);
+  socket.on("join-room", (roomId)=>{ //room is room ID
+    socket.join(roomId);
 
-    if(roomCode[room]){
-      socket.emit("sync-code", roomCode[room]);
+    if(roomCode[roomId]){
+      socket.emit("sync-code", roomCode[roomId]);
     }
 
-    console.log(`User ${socket.id} joined room ${room}`);
+    console.log(`User ${socket.id} joined room ${roomId}`);
   });
 
-  socket.on("code-edit", ({ code, room }) => {
+  socket.on("code-edit", ({ code, roomId }) => {
 
-    roomCode[room] = code;
+    roomCode[roomId] = code;
     
-    console.log(code, room);
+    console.log(code, roomId);
 
-    socket.to(room).emit("receive-code-edit", code);
+    socket.to(roomId).emit("receive-code-edit", code);
   });
 
   socket.on("disconnect", () => {

@@ -5,7 +5,7 @@ import Editor from "@monaco-editor/react";
 const socket = io("http://localhost:5000");
 
 function App() {
-  const [room, setRoomId] = useState("");
+  const [roomId, setRoomId] = useState("");
   const [code, setCode] = useState("");
 
   useEffect(() => {
@@ -25,17 +25,17 @@ function App() {
   }, []);
 
   const joinRoom = () => {
-    socket.emit("join-room", room);
+    socket.emit("join-room", roomId);
   };
 
   const handleCodeChange = (e) => {
-    if(!room) return alert("Please enter a room ID to join");
+    if(!roomId) return alert("Please enter a room ID to join");
     const newCode = e.target.value;
 
     setCode(newCode);
 
     socket.emit("code-edit", {
-      room,
+      roomId: roomId,
       code: newCode,
     });
   };
@@ -47,7 +47,7 @@ function App() {
       <input
         type="text"
         placeholder="Room ID"
-        value={room}
+        value={roomId}
         onChange={(e) => setRoomId(e.target.value)}
       />
 
@@ -67,7 +67,7 @@ function App() {
           setCode(newCode);
         
           socket.emit("code-edit", {
-            room,
+            roomId: roomId,
             code: newCode,
           });
         }
