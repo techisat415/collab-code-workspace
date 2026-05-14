@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import prisma from "./lib/prisma.js";
 dotenv.config();
 
 import express from "express";
@@ -30,23 +31,57 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("join-room", (roomId)=>{ //room is room ID
+  socket.on("join-room", async (roomId)=>{ //room is room ID
     socket.join(roomId);
 
     if(roomCode[roomId]){
+
       socket.emit("sync-code", roomCode[roomId]);
+      console.log(`Loaded ${roomId} with existing code from RAM`);
+
+      return;
     }
 
-    console.log(`User ${socket.id} joined room ${roomId}`);
+    let room = await prisma.room.findUnique({
+      where: {
+        roomId,
+      },
+    });
+
+    if(!room){
+      room = await prisma.room.create({
+        data: {
+          roomId,
+          code: "",
+        },
+      });
+    }
+
+    roomCode[roomId] = room.code;
+
+    socket.emit("sync-code", roomCode[roomId]);
+    console.log(`Loaded ${roomId} with code from database`);
+
   });
 
-  socket.on("code-edit", ({ code, roomId }) => {
+  socket.on("code-edit", async ({ code, roomId }) => {
 
     roomCode[roomId] = code;
     
     console.log(code, roomId);
 
     socket.to(roomId).emit("receive-code-edit", code);
+
+    await prisma.room.update({
+      where: {
+        roomId,
+      },
+      data: {
+        code,
+      },
+    });
+
+
   });
 
   socket.on("disconnect", () => {
