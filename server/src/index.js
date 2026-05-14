@@ -19,7 +19,7 @@ app.get("/", (req, res) => {
 });
 
 const server = http.createServer(app);
-const roomCode = {};
+const activeRooms = {};
 
 const io = new Server(server, {
   cors: {
@@ -34,9 +34,14 @@ io.on("connection", (socket) => {
   socket.on("join-room", async (roomId)=>{ //room is room ID
     socket.join(roomId);
 
-    if(roomCode[roomId]){
+    if(activeRooms[roomId]){
 
-      socket.emit("sync-code", roomCode[roomId]);
+      activeRooms[roomId].users.add(socket.id);
+      socket.emit(
+        "sync-code", 
+        activeRooms[roomId].code
+      );
+
       console.log(`Loaded ${roomId} with existing code from RAM`);
 
       return;
@@ -55,38 +60,90 @@ io.on("connection", (socket) => {
           code: "",
         },
       });
+      console.log(`Created new room ${roomId} in database`);
     }
 
-    roomCode[roomId] = room.code;
+    activeRooms[roomId] = {
+      code: room.code,
+      users: new Set([socket.id]),
+      lastActivity: Date.now(),
+      lastSaved: Date.now(),
+    };
 
-    socket.emit("sync-code", roomCode[roomId]);
+    socket.emit("sync-code", room.code);
     console.log(`Loaded ${roomId} with code from database`);
 
   });
 
-  socket.on("code-edit", async ({ code, roomId }) => {
+  socket.on("code-edit", ({ code, roomId }) => {
 
-    roomCode[roomId] = code;
-    
-    console.log(code, roomId);
+    if(!activeRooms[roomId]){
+      console.error(`Room ${roomId} not found in activeRooms`);
+      return;
+    }
+
+    activeRooms[roomId].code = code;
+    activeRooms[roomId].lastActivity = Date.now();
+
+    // console.log(code, roomId);
 
     socket.to(roomId).emit("receive-code-edit", code);
 
-    await prisma.room.update({
-      where: {
-        roomId,
-      },
-      data: {
-        code,
-      },
-    });
-
-
   });
 
-  socket.on("disconnect", () => {
+  setInterval( async ()=>{
+    console.log(`Autosaving rooms...`);
+
+    for(const roomId in activeRooms){
+      const room = activeRooms[roomId];
+
+      if(
+        Date.now() - room.lastSaved > 50000
+      )
+      {
+        await prisma.room.update({
+          where: {
+            roomId,
+          },
+          data: {
+            code: room.code,
+          }
+        });
+
+        room.lastSaved = Date.now();
+        console.log(`Saved room ${roomId} to database`);
+      }
+
+
+    }
+
+  }, 50000);
+
+  socket.on("disconnect", async () => {
     console.log("User disconnected:", socket.id);
+
+    for(const roomId in actriveRooms){
+      const room = activeRooms[roomId];
+
+      room.users.delete(socket.id);
+
+      if(room.users.size === 0){
+        await prisma.room.update({
+          where: {
+            roomId,
+          },
+          data: {
+            code: room.code,
+          },
+        });
+
+        delete activeRooms[roomId];
+        console.log(`Removed room ${roomId} from RAM`);
+      }
+    }
+
   });
+
 });
 
 const PORT = process.env.PORT || 5000;
