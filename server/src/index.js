@@ -37,6 +37,12 @@ io.on("connection", (socket) => {
     if(activeRooms[roomId]){
 
       activeRooms[roomId].users.add(socket.id);
+
+      io.to(roomId).emit(
+        "room-users", 
+        activeRooms[roomId].users.size
+      );
+
       socket.emit(
         "sync-code", 
         activeRooms[roomId].code
@@ -71,6 +77,10 @@ io.on("connection", (socket) => {
     };
 
     socket.emit("sync-code", room.code);
+    io.to(roomId).emit(
+      "room-users", 
+      activeRooms[roomId].users.size
+    );
     console.log(`Loaded ${roomId} with code from database`);
 
   });
@@ -91,41 +101,18 @@ io.on("connection", (socket) => {
 
   });
 
-  setInterval( async ()=>{
-    console.log(`Autosaving rooms...`);
+  socket.on("disconnect", async () => {
+    console.log("User disconnected:", socket.id);
 
     for(const roomId in activeRooms){
       const room = activeRooms[roomId];
 
-      if(
-        Date.now() - room.lastSaved > 50000
-      )
-      {
-        await prisma.room.update({
-          where: {
-            roomId,
-          },
-          data: {
-            code: room.code,
-          }
-        });
-
-        room.lastSaved = Date.now();
-        console.log(`Saved room ${roomId} to database`);
-      }
-
-
-    }
-
-  }, 50000);
-
-  socket.on("disconnect", async () => {
-    console.log("User disconnected:", socket.id);
-
-    for(const roomId in actriveRooms){
-      const room = activeRooms[roomId];
-
       room.users.delete(socket.id);
+
+      io.to(roomId).emit(
+        "room-users",
+        room.users.size
+      );
 
       if(room.users.size === 0){
         await prisma.room.update({
@@ -145,6 +132,35 @@ io.on("connection", (socket) => {
   });
 
 });
+
+setInterval( async ()=>{
+    console.log(`Autosaving rooms...`);
+
+    for(const roomId in activeRooms){
+      const room = activeRooms[roomId];
+
+      if(
+        Date.now() - room.lastActivity > 5000 &&
+        room.lastSaved < room.lastActivity
+      )
+      {
+        await prisma.room.update({
+          where: {
+            roomId,
+          },
+          data: {
+            code: room.code,
+          }
+        });
+
+        room.lastSaved = Date.now();
+        console.log(`Saved room ${roomId} to database`);
+      }
+
+
+    }
+
+  }, 5000);
 
 const PORT = process.env.PORT || 5000;
 

@@ -5,6 +5,7 @@ import Editor from "@monaco-editor/react";
 const socket = io("http://localhost:5000");
 
 function App() {
+  const [onlineUsers, setOnlineUsers] = useState(0);
   const [roomId, setRoomId] = useState("");
   const [code, setCode] = useState("");
 
@@ -15,6 +16,10 @@ function App() {
 
     socket.on("sync-code", (existingCode)=>{
       setCode(existingCode);
+    });
+
+    socket.on("room-users", (usersCount)=>{
+      setOnlineUsers(usersCount);
     });
 
     return () => {
@@ -56,6 +61,8 @@ function App() {
       </button>
 
       <br /><br />
+
+      <p>Users online: {onlineUsers}</p>
 
       <Editor
         height="400px"
