@@ -67,6 +67,7 @@ function App() {
       <Editor
         height="400px"
         defaultLanguage="javascript"
+        theme="vs-dark"
         value={code}
         onChange={(value) => {
           
