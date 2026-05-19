@@ -1,89 +1,28 @@
-import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
-import Editor from "@monaco-editor/react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-const socket = io("http://localhost:5000");
+import Home from "./pages/Home.jsx";
+import EditorPage from "./pages/EditorPage.jsx";
 
 function App() {
-  const [onlineUsers, setOnlineUsers] = useState(0);
-  const [roomId, setRoomId] = useState("");
-  const [code, setCode] = useState("");
-
-  useEffect(() => {
-    socket.on("receive-code-edit", (incomingCode) => {
-      setCode(incomingCode);
-    });
-
-    socket.on("sync-code", (existingCode)=>{
-      setCode(existingCode);
-    });
-
-    socket.on("room-users", (usersCount)=>{
-      setOnlineUsers(usersCount);
-    });
-
-    return () => {
-      socket.off("receive-code-edit");
-      socket.off("sync-code");
-    };
-    
-  }, []);
-
-  const joinRoom = () => {
-    socket.emit("join-room", roomId);
-  };
-
-  const handleCodeChange = (e) => {
-    if(!roomId) return alert("Please enter a room ID to join");
-    const newCode = e.target.value;
-
-    setCode(newCode);
-
-    socket.emit("code-edit", {
-      roomId: roomId,
-      code: newCode,
-    });
-  };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Collaborative Code Editor</h1>
+    <BrowserRouter>
 
-      <input
-        type="text"
-        placeholder="Room ID"
-        value={roomId}
-        onChange={(e) => setRoomId(e.target.value)}
-      />
+      <Routes>
 
-      <button onClick={joinRoom}>
-        Join Room
-      </button>
+        <Route
+          path="/"
+          element={<Home />}
+        />
 
-      <br /><br />
+        <Route
+          path="/editor/:roomId"
+          element={<EditorPage />}
+        />
 
-      <p>Users online: {onlineUsers}</p>
+      </Routes>
 
-      <Editor
-        height="400px"
-        defaultLanguage="javascript"
-        theme="vs-dark"
-        value={code}
-        onChange={(value) => {
-          
-          const newCode = value || "";
-          setCode(newCode);
-        
-          socket.emit("code-edit", {
-            roomId: roomId,
-            code: newCode,
-          });
-        }
-          
-        }
-        placeholder="Start typing..."
-      />
-    </div>
+    </BrowserRouter>
   );
 }
 
