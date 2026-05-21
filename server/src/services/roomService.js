@@ -16,6 +16,10 @@ export async function loadRoom(roomId, socketId){
         where: {
             roomId,
         },
+
+        include: {
+            files: true,
+        }
     });
 
     if(!room){
@@ -27,8 +31,19 @@ export async function loadRoom(roomId, socketId){
         });
     }
 
+    const files = {};
+
+    room.files.forEach((file) => {
+        files[file.fileName] = { 
+            content: file.content, 
+            language: file.language || "plaintext",
+        };
+    });
+
     activeRooms[roomId] = {
         code: room.code,
+        files,
+        activeFiles: room.files[0]?.name || null,
         users: new Set([socketId]),
         lastActivity: Date.now(),
         lastSaved: Date.now(),

@@ -2,19 +2,24 @@ import activeRooms from "../../store/activeRooms.js";
 
 export default function editorHandlers(socket, io){
 
-    socket.on("code-edit", ({roomId, code}) => {
+    socket.on("edit-file", ({roomId, fileName, content}) => {
+
+        const room = activeRooms[roomId];
         
-        if(!activeRooms[roomId]){
+        if(!room){
             console.log(`Room ${roomId} not found in memory. Edit ignored.`);
             return;
         }
 
-        activeRooms[roomId].code = code;
-        activeRooms[roomId].lastActivity = Date.now();
+        const file = room.files[fileName];
+        if(!file){
+            console.log(`File ${fileName} not found in room ${roomId}. Edit ignored.`);
+            return;
+        }
 
-        socket.to(roomId).emit(
-            "receive-code-edit",
-            code
-        );
+        file.content = content;
+        room.lastActivity = Date.now();
+
+        socket.to(roomId).emit("receive-file-edit", { fileName, content });
     })
 }

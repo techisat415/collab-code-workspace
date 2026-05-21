@@ -17,8 +17,8 @@ function EditorPage() {
       setCode(incomingCode);
     });
 
-    socket.on("receive-code-edit", (incomingCode) => {
-      setCode(incomingCode);
+    socket.on("receive-file-edit", ({ fileName, content }) => {
+      setCode(content);
     });
 
     socket.on("room-users", (count) => {
@@ -27,7 +27,7 @@ function EditorPage() {
 
     return () => {
       socket.off("sync-code");
-      socket.off("receive-code-edit");
+      socket.off("receive-file-edit");
       socket.off("room-users");
     };
 
@@ -38,9 +38,10 @@ function EditorPage() {
     const newCode = value || "";
     setCode(newCode);
 
-    socket.emit("code-edit", {
+    socket.emit("edit-file", {
       roomId,
-      code: newCode,
+      fileName: activeFile,
+      content: newCode,
     });
   };
 
@@ -52,7 +53,7 @@ function EditorPage() {
 
       <Editor
         height="80vh"
-        defaultLanguage="javascript"
+        language={currentLanguage}
         theme="vs-dark"
         value={code}
         onChange={handleCodeChange}
