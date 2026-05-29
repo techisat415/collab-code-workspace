@@ -6,19 +6,38 @@ import socket from "../socket/socket.js";
 function EditorPage() {
 
   const { roomId } = useParams();
-  const [code, setCode] = useState("");
+  const [files, setFiles] = useState({});
+  const [activeFile, setActiveFile] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(0);
 
   useEffect(() => {
 
     socket.emit("join-room", roomId);
 
-    socket.on("sync-code", (incomingCode) => {
-      setCode(incomingCode);
+    socket.on("files-updated", (incomingFiles) => {
+      if(!incomingFiles){
+        console.log("No files received from server.");
+      };
+      console.log("Files received from server:", incomingFiles);
+      setFiles(incomingFiles);
+
+      const fileNames = Object.keys(incomingFiles);
+
+      console.log("File names in room:", fileNames);
+      if(fileNames.length > 0){
+        setActiveFile(fileNames[0]);
+        console.log(`Active file set to ${fileNames[0]}`);
+      }
     });
 
     socket.on("receive-file-edit", ({ fileName, content }) => {
-      setCode(content);
+      setFiles(prev => ({
+        ...prev,
+        [fileName]: {
+          ...prev[fileName],
+          content,
+        }
+      }))
     });
 
     socket.on("room-users", (count) => {
@@ -36,7 +55,14 @@ function EditorPage() {
   const handleCodeChange = (value) => {
 
     const newCode = value || "";
-    setCode(newCode);
+
+    setFiles(prev => ({
+      ...prev,
+      [activeFile]: {
+        ...prev[activeFile],
+        content: newCode,
+      }
+    }));
 
     socket.emit("edit-file", {
       roomId,
@@ -53,9 +79,10 @@ function EditorPage() {
 
       <Editor
         height="80vh"
-        language={currentLanguage}
+        language={files[activeFile]?.language || "javascript"}
+        value={files[activeFile]?.content || ""}
         theme="vs-dark"
-        value={code}
+        
         onChange={handleCodeChange}
       />
 

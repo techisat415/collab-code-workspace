@@ -12,6 +12,8 @@ export async function loadRoom(roomId, socketId){
         };
     }
 
+    
+
     let room = await prisma.room.findUnique({
         where: {
             roomId,
@@ -22,12 +24,42 @@ export async function loadRoom(roomId, socketId){
         }
     });
 
+
+    if(room && room.files.length === 0){
+
+    await prisma.file.create({
+        data:{
+            roomId: room.id,
+            fileName:"main.js",
+            language:"javascript",
+            content:""
+        }
+    });
+
+    room = await prisma.room.findUnique({
+        where:{ roomId },
+        include:{ files:true }
+    });
+}
+
+    console.log("FILES IN DB:",room?.files);
+
     if(!room){
         room = await prisma.room.create({
             data: {
                 roomId,
-                code: "",
+
+                files: {
+                create: {
+                    fileName: "main.js",
+                    language: "javascript",
+                    content: "",
+                }
             },
+            },
+            include: {
+                files: true,
+            }
         });
     }
 
@@ -41,9 +73,8 @@ export async function loadRoom(roomId, socketId){
     });
 
     activeRooms[roomId] = {
-        code: room.code,
         files,
-        activeFiles: room.files[0]?.name || null,
+        activeFile: room.files[0]?.fileName || null,
         users: new Set([socketId]),
         lastActivity: Date.now(),
         lastSaved: Date.now(),
@@ -60,15 +91,6 @@ export async function saveRoom(roomId){
     const room = activeRooms[roomId];
 
     if(!room) return;
-
-    await prisma.room.update({
-        where: {
-            roomId,
-        },
-        data: {
-            code: room.code,
-        },
-    });
 
     room.lastSaved = Date.now();
 }

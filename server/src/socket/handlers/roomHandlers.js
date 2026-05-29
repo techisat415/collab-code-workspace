@@ -9,7 +9,7 @@ export default function roomHandlers(socket, io){
         const { room, source } = await loadRoom(roomId, socket.id);
         io.to(roomId).emit("room-users", room.users.size);
 
-        socket.emit("sync-code", room.code);
+        socket.emit("files-updated", room.files);
 
         console.log(`Socket ${socket.id} joined room ${roomId}. Room loaded from ${source}.`);
     });

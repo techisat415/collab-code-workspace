@@ -4,6 +4,13 @@ export default function editorHandlers(socket, io){
 
     socket.on("edit-file", ({roomId, fileName, content}) => {
 
+        console.log("EDIT RECEIVED:", {
+            roomId,
+            fileName,
+            content
+            });
+
+
         const room = activeRooms[roomId];
         
         if(!room){
