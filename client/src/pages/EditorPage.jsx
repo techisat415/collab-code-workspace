@@ -30,6 +30,19 @@ function EditorPage() {
       }
     });
 
+    socket.on("file-created", ({ name, language }) => {
+      setFiles(prev => ({
+      ...prev,
+      [name]: {
+          content: "",
+          language,
+        },
+      })
+      );
+
+      setActiveFile(name);
+    });
+
     socket.on("receive-file-edit", ({ name, content }) => {
       setFiles(prev => ({
         ...prev,
@@ -103,7 +116,7 @@ function EditorPage() {
             style={{
                   padding: "8px",
                   cursor: "pointer",
-                  background: activeFile === name? "#333": "transparent",
+                  background: activeFile === name? "#333": "#000000",
                   color: "white",
             }}
         >
