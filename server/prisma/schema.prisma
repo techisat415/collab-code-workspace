@@ -24,8 +24,6 @@ model File {
   language String
   content String @default("")
   roomId Int
-  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  room Room @relation(fields:[roomId], references:[id])
+  @@unique([roomId, name])
 }

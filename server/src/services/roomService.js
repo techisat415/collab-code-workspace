@@ -95,5 +95,34 @@ export async function saveRoom(roomId){
 
     if(!room) return;
 
+    const dbRoom = await prisma.room.findUnique({
+        where: { roomId }
+    });
+
+    if(!dbRoom) return;
+
+    for(const name in room.files){
+
+        const file = room.files[name];
+        await prisma.file.upsert({
+            where:{
+                roomId_name:{
+                    roomId: dbRoom.id,
+                    name,
+                }
+            },
+            update:{
+                content:file.content,
+                language:file.language,
+            },
+            create:{
+                roomId:dbRoom.id,
+                name,
+                content:file.content,
+                language:file.language,
+            }
+        });
+    }
+
     room.lastSaved = Date.now();
 }
