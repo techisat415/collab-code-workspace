@@ -61,6 +61,9 @@ export async function loadRoom(roomId, socketId){
                 files: true,
             }
         });
+
+        console.log(`Room ${roomId} created in DB with default file.`);
+        console.log(JSON.stringify(room.files, null, 2));
     }
 
     const files = {};

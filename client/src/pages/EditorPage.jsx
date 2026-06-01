@@ -71,21 +71,62 @@ function EditorPage() {
     });
   };
 
+  const createFile = () =>{
+    const fileName = prompt("Enter the name of the file!");
+    if(!fileName) return;
+
+    socket.emit("create-file", {
+      roomId,
+      fileName
+    });
+  };
+
   return (
-    <div style={{ padding: "20px" }}>
+    <div style = {{
+      display: "flex",
+      height: "100vh",
+    }}>
+      <div style={{
+              width: "250px",
+              borderRight: "1px solid #333",
+              padding: "10px",
+      }}>
+        <button onClick={createFile}> + New File</button>
+
+        <hr />
+
+      {
+        Object.keys(files).map((fileName) => (
+        <div
+            key={fileName}
+            onClick={() => setActiveFile(fileName)}
+            style={{
+                  padding: "8px",
+                  cursor: "pointer",
+                  background: activeFile === fileName? "#333": "transparent",
+                  color: "white",
+            }}
+        >
+        {fileName}
+        </div>
+        ))
+      }
+      </div>
+      <div style={{ flex: 1, padding: "20px" }}>
 
       <h2>Workspace: {roomId}</h2>
       <p>Users online: {onlineUsers}</p>
 
       <Editor
         height="80vh"
-        language={files[activeFile]?.language || "javascript"}
+        language={files[activeFile]?.language || "plaintext"}
         value={files[activeFile]?.content || ""}
         theme="vs-dark"
         
         onChange={handleCodeChange}
       />
 
+      </div>
     </div>
   );
 }
