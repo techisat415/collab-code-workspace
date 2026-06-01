@@ -53,6 +53,31 @@ function EditorPage() {
       }))
     });
 
+    socket.on("file-renamed", ({ oldName, newName }) => {
+      setFiles(prev => {
+        const copy = { ...prev };
+        copy[newName] = copy[oldName];
+        delete copy[oldName];
+        return copy;
+      });
+
+      setActiveFile(prev =>
+        prev === oldName ? newName : prev
+      );
+    });
+
+    socket.on("file-deleted", ({ name }) => {
+      setFiles(prev => {
+        const copy = { ...prev };
+        delete copy[name];
+        return copy;
+      });
+
+      setActiveFile(prev =>
+        prev === name ? (Object.keys(files).length > 1 ? Object.keys(files)[0] : null) : prev
+      );
+    });
+
     socket.on("room-users", (count) => {
       setOnlineUsers(count);
     });
@@ -61,6 +86,8 @@ function EditorPage() {
       socket.off("files-updated");
       socket.off("receive-file-edit");
       socket.off("file-created");
+      socket.off("file-renamed");
+      socket.off("file-deleted");
       socket.off("room-users");
     };
 
@@ -95,6 +122,17 @@ function EditorPage() {
     });
   };
 
+  const renameFile = (oldName) => {
+    const newName = prompt("New file name:", oldName);
+    if (!newName) return;
+    
+    socket.emit("rename-file", { roomId, oldName, newName, });
+  };
+
+  const deleteFile = (name) => {
+    socket.emit("delete-file", { roomId, name, });
+  };
+
   return (
     <div style = {{
       display: "flex",
@@ -121,7 +159,16 @@ function EditorPage() {
                   color: "white",
             }}
         >
-        {name}
+          {name}
+          <button onClick={(e => {
+            e.stopPropagation();
+            renameFile(name);
+          })}> ✏️</button>
+          <button onClick={(e) => {
+            e.stopPropagation();
+            deleteFile(name);
+          }}> ❌</button>
+        
         </div>
         ))
       }

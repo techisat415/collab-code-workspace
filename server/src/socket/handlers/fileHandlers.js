@@ -19,8 +19,9 @@ export default function fileHandlers(socket, io){
   });
 
   socket.on("rename-file", ({ roomId, oldName, newName }) => {
+    console.log("RENAME RECEIVED", oldName, newName);
     const room = activeRooms[roomId];
-    if (!room) return;
+    if (!room || !room.files[oldName] || room.files[newName]) return;
 
     room.files[newName] = room.files[oldName];
     delete room.files[oldName];
@@ -33,6 +34,7 @@ export default function fileHandlers(socket, io){
   
 
   socket.on("delete-file", ({ roomId, name }) => {
+    console.log("DELETE RECEIVED", name);
     const room = activeRooms[roomId];
     if (!room) return;
 
