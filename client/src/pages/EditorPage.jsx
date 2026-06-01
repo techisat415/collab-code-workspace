@@ -58,8 +58,9 @@ function EditorPage() {
     });
 
     return () => {
-      socket.off("sync-code");
+      socket.off("files-updated");
       socket.off("receive-file-edit");
+      socket.off("file-created");
       socket.off("room-users");
     };
 
