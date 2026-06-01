@@ -50,12 +50,12 @@ export async function loadRoom(roomId, socketId){
                 roomId,
 
                 files: {
-                create: {
+                    create: {
                     name: "main.js",
                     language: "javascript",
                     content: "",
-                }
-            },
+                    }
+                },
             },
             include: {
                 files: true,

@@ -3,12 +3,10 @@ import { loadRoom, saveRoom } from "../../services/roomService.js";
 
 export default function roomHandlers(socket, io){
     socket.on("join-room", async(roomId) => {
-
         socket.join(roomId);
 
         const { room, source } = await loadRoom(roomId, socket.id);
         io.to(roomId).emit("room-users", room.users.size);
-
         socket.emit("files-updated", room.files);
 
         console.log(`Socket ${socket.id} joined room ${roomId}. Room loaded from ${source}.`);
