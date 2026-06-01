@@ -92,7 +92,6 @@ export async function loadRoom(roomId, socketId){
 
 export async function saveRoom(roomId){
     const room = activeRooms[roomId];
-
     if(!room) return;
 
     const dbRoom = await prisma.room.findUnique({
@@ -100,7 +99,6 @@ export async function saveRoom(roomId){
     });
 
     if(!dbRoom) return;
-
     for(const name in room.files){
 
         const file = room.files[name];
@@ -123,6 +121,6 @@ export async function saveRoom(roomId){
             }
         });
     }
-
     room.lastSaved = Date.now();
+    console.log(`DB: Room ${roomId} has been saved.`);
 }

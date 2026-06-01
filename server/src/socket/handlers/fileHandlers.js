@@ -1,9 +1,10 @@
 import activeRooms from "../../store/activeRooms.js";
 import detectLanguage from "../../utils/detectLanguage.js";
+import prisma from "../../lib/prisma.js";
 
 export default function fileHandlers(socket, io){
 
-  socket.on("create-file", ({ roomId, name }) => {
+  socket.on("create-file", async ({ roomId, name }) => {
     const room = activeRooms[roomId];
     if (!room) return;
     if (room.files[name]) {
@@ -14,6 +15,19 @@ export default function fileHandlers(socket, io){
       content: "",
       language: detectLanguage(name),
     };
+
+    const dbRoom = await prisma.room.findUnique({
+        where: { roomId }
+    });
+
+    await prisma.file.create({
+        data: {
+            roomId: dbRoom.id,
+            name,
+            language: detectLanguage(name),
+            content: "",
+        }
+    });
       
     io.to(roomId).emit("file-created", {
       name,
@@ -21,7 +35,7 @@ export default function fileHandlers(socket, io){
     });
   });
 
-  socket.on("rename-file", ({ roomId, oldName, newName }) => {
+  socket.on("rename-file", async ({ roomId, oldName, newName }) => {
     console.log("RENAME RECEIVED", oldName, newName);
     const room = activeRooms[roomId];
     if (!room || !room.files[oldName] || room.files[newName]) return;
@@ -30,7 +44,23 @@ export default function fileHandlers(socket, io){
     }
 
     room.files[newName] = room.files[oldName];
+    room.files[newName].language = detectLanguage(newName);
     delete room.files[oldName];
+
+    const dbRoom = await prisma.room.findUnique({
+        where: { roomId }
+    });
+
+    await prisma.file.updateMany({
+        where: {
+            roomId: dbRoom.id,
+            name: oldName,
+        },
+        data: {
+            name: newName,
+            language: detectLanguage(newName),
+        }
+    });
 
     io.to(roomId).emit("file-renamed", {
         oldName,
@@ -39,7 +69,7 @@ export default function fileHandlers(socket, io){
   });
   
 
-  socket.on("delete-file", ({ roomId, name }) => {
+  socket.on("delete-file", async ({ roomId, name }) => {
     console.log("DELETE RECEIVED", name);
     const room = activeRooms[roomId];
     if (!room) return;
@@ -48,6 +78,18 @@ export default function fileHandlers(socket, io){
     }
 
     delete room.files[name];
+
+    const dbRoom = await prisma.room.findUnique({
+        where: { roomId }
+    });
+
+    await prisma.file.deleteMany({
+        where: {
+            roomId: dbRoom.id,
+            name,
+        }
+    });
+
     io.to(roomId).emit("file-deleted", {name,});
   });
 }
