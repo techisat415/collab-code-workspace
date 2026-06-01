@@ -1,6 +1,6 @@
-export default function detectLanguage(fileName){
+export default function detectLanguage(name){
 
-  const ext = fileName.split(".").pop();
+  const ext = name.split(".").pop();
 
   const map = {
     js: "javascript",

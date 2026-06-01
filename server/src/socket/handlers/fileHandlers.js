@@ -5,14 +5,14 @@ export default function fileHandlers(socket, io){
 
     socket.on(
       "create-file",
-      ({ roomId, fileName }) => {
+      ({ roomId, name }) => {
         const room = activeRooms[roomId];
         if(!room) return;
 
-        if(room.files[fileName]) return;
+        if(room.files[name]) return;
 
-        room.files[fileName] = {
-          language: detectLanguage(fileName),
+        room.files[name] = {
+          language: detectLanguage(name),
           content: ""
         };
 

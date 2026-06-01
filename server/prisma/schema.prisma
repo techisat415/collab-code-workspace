@@ -20,7 +20,7 @@ model Room {
 model File {
 
   id Int @id @default(autoincrement())
-  fileName String
+  name String
   language String
   content String @default("")
   roomId Int

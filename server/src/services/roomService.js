@@ -30,7 +30,7 @@ export async function loadRoom(roomId, socketId){
     await prisma.file.create({
         data:{
             roomId: room.id,
-            fileName:"main.js",
+            name:"main.js",
             language:"javascript",
             content:""
         }
@@ -51,7 +51,7 @@ export async function loadRoom(roomId, socketId){
 
                 files: {
                 create: {
-                    fileName: "main.js",
+                    name: "main.js",
                     language: "javascript",
                     content: "",
                 }
@@ -69,7 +69,7 @@ export async function loadRoom(roomId, socketId){
     const files = {};
 
     room.files.forEach((file) => {
-        files[file.fileName] = { 
+        files[file.name] = { 
             content: file.content, 
             language: file.language || "plaintext",
         };
@@ -77,7 +77,7 @@ export async function loadRoom(roomId, socketId){
 
     activeRooms[roomId] = {
         files,
-        activeFile: room.files[0]?.fileName || null,
+        activeFile: room.files[0]?.name || null,
         users: new Set([socketId]),
         lastActivity: Date.now(),
         lastSaved: Date.now(),

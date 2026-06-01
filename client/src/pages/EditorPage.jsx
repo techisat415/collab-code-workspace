@@ -30,11 +30,11 @@ function EditorPage() {
       }
     });
 
-    socket.on("receive-file-edit", ({ fileName, content }) => {
+    socket.on("receive-file-edit", ({ name, content }) => {
       setFiles(prev => ({
         ...prev,
-        [fileName]: {
-          ...prev[fileName],
+        [name]: {
+          ...prev[name],
           content,
         }
       }))
@@ -66,18 +66,18 @@ function EditorPage() {
 
     socket.emit("edit-file", {
       roomId,
-      fileName: activeFile,
+      name: activeFile,
       content: newCode,
     });
   };
 
   const createFile = () =>{
-    const fileName = prompt("Enter the name of the file!");
-    if(!fileName) return;
+    const name = prompt("Enter the name of the file!");
+    if(!name) return;
 
     socket.emit("create-file", {
       roomId,
-      fileName
+      name
     });
   };
 
@@ -96,18 +96,18 @@ function EditorPage() {
         <hr />
 
       {
-        Object.keys(files).map((fileName) => (
+        Object.keys(files).map((name) => (
         <div
-            key={fileName}
-            onClick={() => setActiveFile(fileName)}
+            key={name}
+            onClick={() => setActiveFile(name)}
             style={{
                   padding: "8px",
                   cursor: "pointer",
-                  background: activeFile === fileName? "#333": "transparent",
+                  background: activeFile === name? "#333": "transparent",
                   color: "white",
             }}
         >
-        {fileName}
+        {name}
         </div>
         ))
       }
