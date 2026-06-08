@@ -29,4 +29,13 @@ export default function editorHandlers(socket, io){
 
         socket.to(roomId).emit("receive-file-edit", { name, content });
     })
-}
+    socket.on("cursor-move", ({ roomId, line, column, }) => {
+        socket.to(roomId).emit(
+          "user-cursor",
+          {
+            socketId: socket.id,
+            line,
+            column,
+          }
+        );
+      });}

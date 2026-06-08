@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import Editor from "@monaco-editor/react";
 import socket from "../socket/socket.js";
@@ -9,6 +9,16 @@ function EditorPage() {
   const [files, setFiles] = useState({});
   const [activeFile, setActiveFile] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(0);
+
+  const editorRef = useRef(null);
+
+  function handleEditorDidMount(editor) {
+    editorRef.current = editor;
+
+      editor.onDidChangeCursorPosition((e) => {
+      socket.emit("cursor-move", { roomId, line: e.position.lineNumber, column: e.position.column,});
+  });
+}
 
   useEffect(() => {
 
@@ -70,16 +80,22 @@ function EditorPage() {
       setFiles(prev => {
         const copy = { ...prev };
         delete copy[name];
+        const remainingFiles = Object.keys(copy);
+        setActiveFile(
+            remainingFiles.length > 0
+              ? remainingFiles[0]
+              : null
+          );
         return copy;
       });
-
-      setActiveFile(prev =>
-        prev === name ? (Object.keys(files).length > 1 ? Object.keys(files)[0] : null) : prev
-      );
     });
 
     socket.on("room-users", (count) => {
       setOnlineUsers(count);
+    });
+
+    socket.on("user-cursor", (data) => {
+        console.log(data);
     });
 
     return () => {
@@ -89,6 +105,7 @@ function EditorPage() {
       socket.off("file-renamed");
       socket.off("file-deleted");
       socket.off("room-users");
+      socket.off("user-cursor");
     };
 
   }, [roomId]);
@@ -184,6 +201,7 @@ function EditorPage() {
         value={files[activeFile]?.content || ""}
         theme="vs-dark"
         
+        onMount={handleEditorDidMount}
         onChange={handleCodeChange}
       />
 
