@@ -2,18 +2,24 @@ import activeRooms from "../../store/activeRooms.js";
 import detectLanguage from "../../utils/detectLanguage.js";
 import prisma from "../../lib/prisma.js";
 
+function getFileName(filePath) {
+  return filePath.split("/").pop() || filePath;
+}
+
 export default function fileHandlers(socket, io){
 
-  socket.on("create-file", async ({ roomId, name }) => {
+  socket.on("create-file", async ({ roomId, path }) => {
     const room = activeRooms[roomId];
     if (!room) return;
-    if (room.files[name]) {
+    if (room.files[path]) {
       return;
     }
       
-    room.files[name] = {
+    room.files[path] = {
+      name: getFileName(path),
+      path,
       content: "",
-      language: detectLanguage(name),
+      language: detectLanguage(path),
     };
 
     const dbRoom = await prisma.room.findUnique({
@@ -23,29 +29,34 @@ export default function fileHandlers(socket, io){
     await prisma.file.create({
         data: {
             roomId: dbRoom.id,
-            name,
-            language: detectLanguage(name),
+            name: getFileName(path),
+            path,
+            language: detectLanguage(path),
             content: "",
         }
     });
       
     io.to(roomId).emit("file-created", {
-      name,
-      language: detectLanguage(name),
+      name: getFileName(path),
+      path,
+      language: detectLanguage(path),
+      content: "",
     });
   });
 
-  socket.on("rename-file", async ({ roomId, oldName, newName }) => {
-    console.log("RENAME RECEIVED", oldName, newName);
+  socket.on("rename-file", async ({ roomId, oldPath, newPath }) => {
+    console.log("RENAME RECEIVED", oldPath, newPath);
     const room = activeRooms[roomId];
-    if (!room || !room.files[oldName] || room.files[newName]) return;
-    if(room.files[newName]){
+    if (!room || !room.files[oldPath] || room.files[newPath]) return;
+    if(room.files[newPath]){
         return;
     }
 
-    room.files[newName] = room.files[oldName];
-    room.files[newName].language = detectLanguage(newName);
-    delete room.files[oldName];
+    room.files[newPath] = room.files[oldPath];
+    room.files[newPath].name = getFileName(newPath);
+    room.files[newPath].path = newPath;
+    room.files[newPath].language = detectLanguage(newPath);
+    delete room.files[oldPath];
 
     const dbRoom = await prisma.room.findUnique({
         where: { roomId }
@@ -54,30 +65,31 @@ export default function fileHandlers(socket, io){
     await prisma.file.updateMany({
         where: {
             roomId: dbRoom.id,
-            name: oldName,
+            path: oldPath,
         },
         data: {
-            name: newName,
-            language: detectLanguage(newName),
+            name: getFileName(newPath),
+            path: newPath,
+            language: detectLanguage(newPath),
         }
     });
 
     io.to(roomId).emit("file-renamed", {
-        oldName,
-        newName,
+        oldPath,
+        newPath,
     });
   });
   
 
-  socket.on("delete-file", async ({ roomId, name }) => {
-    console.log("DELETE RECEIVED", name);
+  socket.on("delete-file", async ({ roomId, path }) => {
+    console.log("DELETE RECEIVED", path);
     const room = activeRooms[roomId];
     if (!room) return;
     if(Object.keys(room.files).length === 1){
         return;
     }
 
-    delete room.files[name];
+    delete room.files[path];
 
     const dbRoom = await prisma.room.findUnique({
         where: { roomId }
@@ -86,10 +98,10 @@ export default function fileHandlers(socket, io){
     await prisma.file.deleteMany({
         where: {
             roomId: dbRoom.id,
-            name,
+            path,
         }
     });
 
-    io.to(roomId).emit("file-deleted", {name,});
+    io.to(roomId).emit("file-deleted", { path });
   });
 }

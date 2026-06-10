@@ -21,9 +21,10 @@ model File {
 
   id Int @id @default(autoincrement())
   name String
+  path String
   language String
   content String @default("")
   roomId Int
-  room Room @relation(fields:[roomId], references:[id])
-  @@unique([roomId, name])
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  @@unique([roomId, path])
 }

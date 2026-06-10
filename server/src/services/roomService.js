@@ -1,6 +1,14 @@
 import prisma from "../lib/prisma.js";
 import activeRooms from "../store/activeRooms.js";
 
+function getFilePath(file) {
+    return file.path || file.name;
+}
+
+function getFileName(filePath) {
+    return filePath.split("/").pop() || filePath;
+}
+
 export async function loadRoom(roomId, socketId){
     let roomInMemory = activeRooms[roomId];
 
@@ -31,6 +39,7 @@ export async function loadRoom(roomId, socketId){
         data:{
             roomId: room.id,
             name:"main.js",
+            path:"main.js",
             language:"javascript",
             content:""
         }
@@ -52,6 +61,7 @@ export async function loadRoom(roomId, socketId){
                 files: {
                     create: {
                     name: "main.js",
+                            path: "main.js",
                     language: "javascript",
                     content: "",
                     }
@@ -69,7 +79,10 @@ export async function loadRoom(roomId, socketId){
     const files = {};
 
     room.files.forEach((file) => {
-        files[file.name] = { 
+        const filePath = getFilePath(file);
+        files[filePath] = { 
+            name: file.name || getFileName(filePath),
+            path: filePath,
             content: file.content, 
             language: file.language || "plaintext",
         };
@@ -77,7 +90,7 @@ export async function loadRoom(roomId, socketId){
 
     activeRooms[roomId] = {
         files,
-        activeFile: room.files[0]?.name || null,
+        activeFile: room.files[0] ? getFilePath(room.files[0]) : null,
         users: new Set([socketId]),
         lastActivity: Date.now(),
         lastSaved: Date.now(),
@@ -99,23 +112,26 @@ export async function saveRoom(roomId){
     });
 
     if(!dbRoom) return;
-    for(const name in room.files){
+    for(const path in room.files){
 
-        const file = room.files[name];
+        const file = room.files[path];
         await prisma.file.upsert({
             where:{
-                roomId_name:{
+                roomId_path:{
                     roomId: dbRoom.id,
-                    name,
+                    path,
                 }
             },
             update:{
+                name: file.name || getFileName(path),
+                path,
                 content:file.content,
                 language:file.language,
             },
             create:{
                 roomId:dbRoom.id,
-                name,
+                name: file.name || getFileName(path),
+                path,
                 content:file.content,
                 language:file.language,
             }

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import Editor from "@monaco-editor/react";
 import socket from "../socket/socket.js";
+import FileTree from "../components/FileTree.jsx";
 
 function EditorPage() {
 
@@ -31,55 +32,61 @@ function EditorPage() {
       console.log("Files received from server:", incomingFiles);
       setFiles(incomingFiles);
 
-      const fileNames = Object.keys(incomingFiles);
+      const filePaths = Object.keys(incomingFiles);
 
-      console.log("File names in room:", fileNames);
-      if(fileNames.length > 0){
-        setActiveFile(fileNames[0]);
-        console.log(`Active file set to ${fileNames[0]}`);
+      console.log("File paths in room:", filePaths);
+      if(filePaths.length > 0){
+        setActiveFile(filePaths[0]);
+        console.log(`Active file set to ${filePaths[0]}`);
       }
     });
 
-    socket.on("file-created", ({ name, language }) => {
+    socket.on("file-created", ({ path, name, language, content }) => {
       setFiles(prev => ({
       ...prev,
-      [name]: {
-          content: "",
+      [path]: {
+          name,
+          path,
+          content: content || "",
           language,
         },
       })
       );
 
-      setActiveFile(name);
+      setActiveFile(path);
     });
 
-    socket.on("receive-file-edit", ({ name, content }) => {
+    socket.on("receive-file-edit", ({ path, content }) => {
       setFiles(prev => ({
         ...prev,
-        [name]: {
-          ...prev[name],
+        [path]: {
+          ...prev[path],
           content,
         }
       }))
     });
 
-    socket.on("file-renamed", ({ oldName, newName }) => {
+    socket.on("file-renamed", ({ oldPath, newPath }) => {
       setFiles(prev => {
         const copy = { ...prev };
-        copy[newName] = copy[oldName];
-        delete copy[oldName];
+        copy[newPath] = {
+          ...copy[oldPath],
+          path: newPath,
+          name: newPath.split("/").pop() || newPath,
+        };
+        delete copy[oldPath];
         return copy;
       });
 
       setActiveFile(prev =>
-        prev === oldName ? newName : prev
+        prev === oldPath ? newPath : prev
       );
     });
 
-    socket.on("file-deleted", ({ name }) => {
+    socket.on("file-deleted", ({ path }) => {
       setFiles(prev => {
         const copy = { ...prev };
-        delete copy[name];
+        delete copy[path];
         const remainingFiles = Object.keys(copy);
         setActiveFile(
             remainingFiles.length > 0
@@ -114,6 +121,10 @@ function EditorPage() {
 
     const newCode = value || "";
 
+    if (!activeFile) {
+      return;
+    }
+
     setFiles(prev => ({
       ...prev,
       [activeFile]: {
@@ -124,30 +135,30 @@ function EditorPage() {
 
     socket.emit("edit-file", {
       roomId,
-      name: activeFile,
+      path: activeFile,
       content: newCode,
     });
   };
 
   const createFile = () =>{
-    const name = prompt("Enter the name of the file!");
-    if(!name) return;
+    const path = prompt("Enter file path:");
+    if(!path) return;
 
     socket.emit("create-file", {
       roomId,
-      name
+      path
     });
   };
 
-  const renameFile = (oldName) => {
-    const newName = prompt("New file name:", oldName);
-    if (!newName) return;
+  const renameFile = (oldPath) => {
+    const newPath = prompt("New file path:", oldPath);
+    if (!newPath) return;
     
-    socket.emit("rename-file", { roomId, oldName, newName, });
+    socket.emit("rename-file", { roomId, oldPath, newPath, });
   };
 
-  const deleteFile = (name) => {
-    socket.emit("delete-file", { roomId, name, });
+  const deleteFile = (path) => {
+    socket.emit("delete-file", { roomId, path, });
   };
 
   return (
@@ -163,32 +174,13 @@ function EditorPage() {
         <button onClick={createFile}> + New File</button>
 
         <hr />
-
-      {
-        Object.keys(files).map((name) => (
-        <div
-            key={name}
-            onClick={() => setActiveFile(name)}
-            style={{
-                  padding: "8px",
-                  cursor: "pointer",
-                  background: activeFile === name? "#333": "#000000",
-                  color: "white",
-            }}
-        >
-          {name}
-          <button onClick={(e => {
-            e.stopPropagation();
-            renameFile(name);
-          })}> ✏️</button>
-          <button onClick={(e) => {
-            e.stopPropagation();
-            deleteFile(name);
-          }}> ❌</button>
-        
-        </div>
-        ))
-      }
+        <FileTree
+          files={files}
+          activePath={activeFile}
+          onSelect={setActiveFile}
+          onRename={renameFile}
+          onDelete={deleteFile}
+        />
       </div>
       <div style={{ flex: 1, padding: "20px" }}>
 
