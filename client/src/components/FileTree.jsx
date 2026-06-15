@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 function buildTree(files) {
   const tree = {};
 
@@ -33,33 +35,55 @@ function sortEntries(entries) {
   });
 }
 
-function FileTreeNode({ nodes, depth = 0, activePath, onSelect, onRename, onDelete }) {
+function FileTreeNode({
+  nodes,
+  depth = 0,
+  activePath,
+  onSelect,
+  onRename,
+  onDelete,
+  expandedFolders,
+  setExpandedFolders,
+}) {
   const entries = sortEntries(Object.entries(nodes));
 
   return entries.map(([label, node]) => {
     const isActive = activePath === node.path;
 
     if (!node.isFile) {
+      const isExpanded = expandedFolders[node.path] ?? true;
+
       return (
         <div key={node.path} style={{ marginLeft: depth ? 14 : 0 }}>
           <div
+            onClick={() =>
+              setExpandedFolders((previous) => ({
+                ...previous,
+                [node.path]: !isExpanded,
+              }))
+            }
             style={{
               padding: "6px 8px",
               color: "#c5c5c5",
               fontSize: 13,
               fontWeight: 600,
+              cursor: "pointer",
             }}
           >
-            📁 {label}
+            {isExpanded ? "▼" : "▶"} 📁 {label}
           </div>
-          <FileTreeNode
-            nodes={node.children}
-            depth={depth + 1}
-            activePath={activePath}
-            onSelect={onSelect}
-            onRename={onRename}
-            onDelete={onDelete}
-          />
+          {isExpanded && (
+            <FileTreeNode
+              nodes={node.children}
+              depth={depth + 1}
+              activePath={activePath}
+              onSelect={onSelect}
+              onRename={onRename}
+              onDelete={onDelete}
+              expandedFolders={expandedFolders}
+              setExpandedFolders={setExpandedFolders}
+            />
+          )}
         </div>
       );
     }
@@ -108,7 +132,19 @@ function FileTreeNode({ nodes, depth = 0, activePath, onSelect, onRename, onDele
 }
 
 export default function FileTree({ files, activePath, onSelect, onRename, onDelete }) {
+  const [expandedFolders, setExpandedFolders] = useState({});
+
   const tree = buildTree(files);
 
-  return <FileTreeNode nodes={tree} activePath={activePath} onSelect={onSelect} onRename={onRename} onDelete={onDelete} />;
+  return (
+    <FileTreeNode
+      nodes={tree}
+      activePath={activePath}
+      onSelect={onSelect}
+      onRename={onRename}
+      onDelete={onDelete}
+      expandedFolders={expandedFolders}
+      setExpandedFolders={setExpandedFolders}
+    />
+  );
 }
