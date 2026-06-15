@@ -10,18 +10,77 @@ function EditorPage() {
   const [files, setFiles] = useState({});
   const [activeFile, setActiveFile] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(0);
+  const [remoteCursors, setRemoteCursors] = useState({});
 
   const editorRef = useRef(null);
+  const remoteCursorDecorationsRef = useRef([]);
+  const activeFileRef = useRef(null);
+
+  useEffect(() => {
+    activeFileRef.current = activeFile;
+  }, [activeFile]);
 
   function handleEditorDidMount(editor) {
     editorRef.current = editor;
 
-      editor.onDidChangeCursorPosition((e) => {
-      socket.emit("cursor-move", { roomId, line: e.position.lineNumber, column: e.position.column,});
-  });
-}
+    editor.onDidChangeCursorPosition((e) => {
+      const path = activeFileRef.current;
+
+      if (!path) {
+        return;
+      }
+
+      socket.emit("cursor-move", {
+        roomId,
+        path,
+        line: e.position.lineNumber,
+        column: e.position.column,
+      });
+    });
+  }
 
   useEffect(() => {
+    const editor = editorRef.current;
+    const model = editor?.getModel();
+
+    if (!editor || !model) {
+      return;
+    }
+
+    console.log("REMOTE CURSORS:", remoteCursors);
+    console.log("ACTIVE FILE:", activeFile);
+
+    const decorations = Object.values(remoteCursors)
+      .filter((cursor) => cursor.path === activeFile)
+      .map((cursor) => {
+        const lineNumber = Math.max(1, Math.min(cursor.line, model.getLineCount()));
+        const lineMaxColumn = model.getLineMaxColumn(lineNumber);
+        const columnNumber = Math.max(1, Math.min(cursor.column, lineMaxColumn));
+
+        return {
+          range: {
+            startLineNumber: lineNumber,
+            startColumn: 1,
+            endLineNumber: lineNumber,
+            endColumn: lineMaxColumn,
+          },
+          options: {
+            isWholeLine: true,
+            className: "remote-cursor",
+          },
+        };
+      });
+
+    console.log("DECORATIONS:", decorations);
+
+    remoteCursorDecorationsRef.current = editor.deltaDecorations(
+      remoteCursorDecorationsRef.current,
+      decorations
+    );
+  }, [remoteCursors, activeFile]);
+
+  useEffect(() => {
+    setRemoteCursors({});
 
     socket.emit("join-room", roomId);
 
@@ -102,7 +161,10 @@ function EditorPage() {
     });
 
     socket.on("user-cursor", (data) => {
-        console.log(data);
+      setRemoteCursors((previous) => ({
+        ...previous,
+        [data.socketId]: data,
+      }));
     });
 
     return () => {

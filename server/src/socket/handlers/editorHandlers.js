@@ -23,11 +23,19 @@ export default function editorHandlers(socket, io){
 
     socket.to(roomId).emit("receive-file-edit", { path, content });
     })
-    socket.on("cursor-move", ({ roomId, line, column, }) => {
+    socket.on("cursor-move", ({ roomId, path, line, column }) => {
+        console.log("CURSOR:", {
+          socket: socket.id,
+          path,
+          line,
+          column,
+        });
+
         socket.to(roomId).emit(
           "user-cursor",
           {
             socketId: socket.id,
+            path,
             line,
             column,
           }
