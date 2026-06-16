@@ -1,43 +1,68 @@
+import * as Y from "yjs";
+import roomDocs from "../../store/roomDocs.js";
 import activeRooms from "../../store/activeRooms.js";
 
 export default function editorHandlers(socket, io){
 
-  socket.on("edit-file", ({ roomId, path, content }) => {
+  socket.on("yjs-sync", ({ roomId, path, update }) => {
 
-    console.log("EDIT RECEIVED:", { roomId, path, content });
-        const room = activeRooms[roomId];
-        
-        if(!room){
-            console.log(`Room ${roomId} not found in memory. Edit ignored.`);
-            return;
-        }
+    const key = `${roomId}:${path}`;
 
-    const file = room.files[path];
-        if(!file){
-      console.log(`File ${path} not found in room ${roomId}. Edit ignored.`);
-            return;
-        }
+    if (!roomDocs[key]) {roomDocs[key] = new Y.Doc();}
 
-        file.content = content;
-        room.lastActivity = Date.now();
+    Y.applyUpdate(roomDocs[key], new Uint8Array(update));
+    const room = activeRooms[roomId];
 
-    socket.to(roomId).emit("receive-file-edit", { path, content });
-    })
-    socket.on("cursor-move", ({ roomId, path, line, column }) => {
-        console.log("CURSOR:", {
-          socket: socket.id,
-          path,
-          line,
-          column,
-        });
+    if (room) {
+      room.lastActivity = Date.now();
+    }
 
-        socket.to(roomId).emit(
-          "user-cursor",
-          {
-            socketId: socket.id,
-            path,
-            line,
-            column,
-          }
-        );
-      });}
+    socket.to(roomId).emit(
+      "yjs-update",
+      {
+        path,
+        update,
+      }
+    );
+  });
+
+  socket.on("request-yjs-state", ({ roomId, path }) => {
+
+    const key = `${roomId}:${path}`;
+
+    if (!roomDocs[key]) {
+      roomDocs[key] = new Y.Doc();
+    }
+
+    socket.emit(
+      "yjs-state",
+      {
+        path,
+        update: Array.from(
+          Y.encodeStateAsUpdate(
+            roomDocs[key]
+          )
+        ),
+      }
+    );
+  });
+
+  socket.on("cursor-move", ({ roomId, path, line, column }) => {
+    console.log("CURSOR:", {
+      socket: socket.id,
+      path,
+      line,
+      column,
+    });
+
+    socket.to(roomId).emit(
+      "user-cursor",
+      {
+        socketId: socket.id,
+        path,
+        line,
+        column,
+      }
+    );
+  });
+}

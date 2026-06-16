@@ -1,5 +1,7 @@
 import prisma from "../lib/prisma.js";
 import activeRooms from "../store/activeRooms.js";
+import roomDocs from "../store/roomDocs.js";
+import * as Y from "yjs";
 
 function getFilePath(file) {
     return file.path || file.name;
@@ -7,6 +9,18 @@ function getFilePath(file) {
 
 function getFileName(filePath) {
     return filePath.split("/").pop() || filePath;
+}
+
+function getOrCreateDoc(file, roomId, filePath) {
+    const key = `${roomId}:${filePath}`;
+
+    if (!roomDocs[key]) {
+        const doc = new Y.Doc();
+        doc.getText("content").insert(0, file.content || "");
+        roomDocs[key] = doc;
+    }
+
+    return roomDocs[key];
 }
 
 export async function loadRoom(roomId, socketId){
@@ -80,10 +94,10 @@ export async function loadRoom(roomId, socketId){
 
     room.files.forEach((file) => {
         const filePath = getFilePath(file);
+        getOrCreateDoc(file, roomId, filePath);
         files[filePath] = { 
             name: file.name || getFileName(filePath),
             path: filePath,
-            content: file.content, 
             language: file.language || "plaintext",
         };
     });
@@ -115,6 +129,11 @@ export async function saveRoom(roomId){
     for(const path in room.files){
 
         const file = room.files[path];
+        const doc = roomDocs[`${roomId}:${path}`];
+        const content = doc?.getText("content").toString() || "";
+
+        console.log("Saving file", file, content);
+
         await prisma.file.upsert({
             where:{
                 roomId_path:{
@@ -125,14 +144,14 @@ export async function saveRoom(roomId){
             update:{
                 name: file.name || getFileName(path),
                 path,
-                content:file.content,
+                content,
                 language:file.language,
             },
             create:{
                 roomId:dbRoom.id,
                 name: file.name || getFileName(path),
                 path,
-                content:file.content,
+                content,
                 language:file.language,
             }
         });
