@@ -1,4 +1,7 @@
-/* Monaco remote cursor marker */
-.remote-cursor {
-	background: rgba(255, 0, 0, 0.3) !important;
+.yRemoteSelection {
+  background: rgba(255, 208, 0, 0.3) !important;
+}
+
+.yRemoteSelectionHead {
+  border-left: 2px solid red;
 }

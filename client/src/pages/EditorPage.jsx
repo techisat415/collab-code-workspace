@@ -1,8 +1,10 @@
+import * as Y from "yjs";
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import Editor from "@monaco-editor/react";
-import * as Y from "yjs";
 import { MonacoBinding } from "y-monaco";
+import { Awareness } from "y-protocols/awareness";
+import { applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
+import Editor from "@monaco-editor/react";
 import socket from "../socket/socket.js";
 import FileTree from "../components/FileTree.jsx";
 
@@ -12,13 +14,80 @@ function EditorPage() {
   const [files, setFiles] = useState({});
   const [activeFile, setActiveFile] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(0);
-  const [remoteCursors, setRemoteCursors] = useState({});
 
   const editorRef = useRef(null);
   const ydocRef = useRef(null);
+  const awarenessDocRef = useRef(null);
+  const awarenessRef = useRef(null);
   const bindingRef = useRef(null);
-  const remoteCursorDecorationsRef = useRef([]);
   const activeFileRef = useRef(null);
+
+  const buildAwarenessStyles = () => {
+    const awareness = awarenessRef.current;
+
+    if (!awareness) {
+      return;
+    }
+
+    let styleElement = document.getElementById("yjs-awareness-styles");
+
+    if (!styleElement) {
+      styleElement = document.createElement("style");
+      styleElement.id = "yjs-awareness-styles";
+      document.head.appendChild(styleElement);
+    }
+
+    const rules = [
+      ".yRemoteSelection { background: rgba(255, 0, 0, 0.3) !important; }",
+      ".yRemoteSelectionHead { border-left: 2px solid red !important; }",
+    ];
+
+    for (const [clientId, state] of awareness.getStates()) {
+      if (clientId === awareness.clientID) {
+        continue;
+      }
+
+      const color = state?.user?.color;
+
+      if (!color) {
+        continue;
+      }
+
+      rules.push(`.yRemoteSelection-${clientId} { background: ${color}33 !important; }`);
+      rules.push(`.yRemoteSelectionHead-${clientId} { border-left: 2px solid ${color} !important; }`);
+    }
+
+    styleElement.textContent = rules.join("\n");
+  };
+
+  const initializeAwareness = () => {
+    if (!awarenessDocRef.current) {
+      return;
+    }
+
+    console.log("SOCKET ID:", socket.id);
+
+    awarenessRef.current = new Awareness(awarenessDocRef.current);
+
+    const userId = socket.id || crypto.randomUUID();
+
+    awarenessRef.current.setLocalStateField("user", {
+      name: `Guest-${userId.slice(0, 4)}`,
+      color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+    });
+
+    buildAwarenessStyles();
+
+    socket.emit("awareness-update", {
+      roomId,
+      update: Array.from(
+        encodeAwarenessUpdate(
+          awarenessRef.current,
+          [awarenessRef.current.clientID]
+        )
+      ),
+    });
+  };
 
   const attachYjsBinding = () => {
     const editor = editorRef.current;
@@ -41,12 +110,15 @@ function EditorPage() {
     bindingRef.current = new MonacoBinding(
       ydoc.getText("content"),
       model,
-      new Set([editor])
+      new Set([editor]),
+      awarenessRef.current
     );
   };
 
   useEffect(() => {
+    awarenessDocRef.current = new Y.Doc();
     ydocRef.current = new Y.Doc();
+    initializeAwareness();
 
     return () => {
       if (bindingRef.current) {
@@ -58,6 +130,13 @@ function EditorPage() {
         ydocRef.current.destroy();
         ydocRef.current = null;
       }
+
+      if (awarenessDocRef.current) {
+        awarenessDocRef.current.destroy();
+        awarenessDocRef.current = null;
+      }
+
+      awarenessRef.current = null;
     };
   }, []);
 
@@ -68,26 +147,9 @@ function EditorPage() {
   function handleEditorDidMount(editor) {
     editorRef.current = editor;
     attachYjsBinding();
-
-    editor.onDidChangeCursorPosition((e) => {
-      const path = activeFileRef.current;
-
-      if (!path) {
-        return;
-      }
-
-      socket.emit("cursor-move", {
-        roomId,
-        path,
-        line: e.position.lineNumber,
-        column: e.position.column,
-      });
-    });
   }
 
   useEffect(() => {
-    setRemoteCursors({});
-
     socket.emit("join-room", roomId);
 
     const handleFilesUpdated = (incomingFiles) => {
@@ -159,13 +221,6 @@ function EditorPage() {
       setOnlineUsers(count);
     };
 
-    const handleUserCursor = (data) => {
-      setRemoteCursors((previous) => ({
-        ...previous,
-        [data.socketId]: data,
-      }));
-    };
-
     const handleYjsState = ({ path, update }) => {
       if (path !== activeFileRef.current || !ydocRef.current) {
         return;
@@ -202,15 +257,30 @@ function EditorPage() {
       }));
     };
 
+    const handleAwarenessUpdate = ({ update }) => {
+      if (!awarenessRef.current) {
+        return;
+      }
+
+      applyAwarenessUpdate(
+        awarenessRef.current,
+        new Uint8Array(update),
+        "remote"
+      );
+
+      console.log([...awarenessRef.current.getStates().entries()]);
+      buildAwarenessStyles();
+    };
+
     socket.on("files-updated", handleFilesUpdated);
     socket.on("file-created", handleFileCreated);
     // socket.on("receive-file-edit", handleReceiveFileEdit);
     socket.on("file-renamed", handleFileRenamed);
     socket.on("file-deleted", handleFileDeleted);
     socket.on("room-users", handleRoomUsers);
-    socket.on("user-cursor", handleUserCursor);
     socket.on("yjs-state", handleYjsState);
     socket.on("yjs-update", handleYjsUpdate);
+    socket.on("awareness-update", handleAwarenessUpdate);
 
     return () => {
       socket.off("files-updated", handleFilesUpdated);
@@ -219,9 +289,9 @@ function EditorPage() {
       socket.off("file-renamed", handleFileRenamed);
       socket.off("file-deleted", handleFileDeleted);
       socket.off("room-users", handleRoomUsers);
-      socket.off("user-cursor", handleUserCursor);
       socket.off("yjs-state", handleYjsState);
       socket.off("yjs-update", handleYjsUpdate);
+      socket.off("awareness-update", handleAwarenessUpdate);
     };
 
   }, [roomId]);
@@ -284,44 +354,35 @@ function EditorPage() {
   }, [roomId, activeFile]);
 
   useEffect(() => {
-    const editor = editorRef.current;
-    const model = editor?.getModel();
+    const awareness = awarenessRef.current;
 
-    if (!editor || !model) {
-      return;
-    }
+    if (!awareness) return;
 
-    console.log("REMOTE CURSORS:", remoteCursors);
-    console.log("ACTIVE FILE:", activeFile);
+    const handler = ({ added, updated, removed }, origin) => {
+      if (origin === "remote") {
+        return;
+      }
 
-    const decorations = Object.values(remoteCursors)
-      .filter((cursor) => cursor.path === activeFile)
-      .map((cursor) => {
-        const lineNumber = Math.max(1, Math.min(cursor.line, model.getLineCount()));
-        const lineMaxColumn = model.getLineMaxColumn(lineNumber);
-        const columnNumber = Math.max(1, Math.min(cursor.column, lineMaxColumn));
+      const changedClients = added.concat(updated, removed);
 
-        return {
-          range: {
-            startLineNumber: lineNumber,
-            startColumn: 1,
-            endLineNumber: lineNumber,
-            endColumn: lineMaxColumn,
-          },
-          options: {
-            isWholeLine: true,
-            className: "remote-cursor",
-          },
-        };
+      socket.emit("awareness-update", {
+        roomId,
+        update: Array.from(
+          encodeAwarenessUpdate(
+            awareness,
+            changedClients
+          )
+        ),
       });
+    };
 
-    console.log("DECORATIONS:", decorations);
+    awareness.on("update", handler);
 
-    remoteCursorDecorationsRef.current = editor.deltaDecorations(
-      remoteCursorDecorationsRef.current,
-      decorations
-    );
-  }, [remoteCursors, activeFile]);
+    return () => {
+      awareness.off("update", handler);
+    };
+
+  }, []);
 
   const createFile = () =>{
     const path = prompt("Enter file path:");

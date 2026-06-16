@@ -47,21 +47,12 @@ export default function editorHandlers(socket, io){
     );
   });
 
-  socket.on("cursor-move", ({ roomId, path, line, column }) => {
-    console.log("CURSOR:", {
-      socket: socket.id,
-      path,
-      line,
-      column,
-    });
+  socket.on("awareness-update", ({ roomId, update }) => {
 
     socket.to(roomId).emit(
-      "user-cursor",
+      "awareness-update",
       {
-        socketId: socket.id,
-        path,
-        line,
-        column,
+        update,
       }
     );
   });
