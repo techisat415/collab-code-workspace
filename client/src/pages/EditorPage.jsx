@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { MonacoBinding } from "y-monaco";
 import { Awareness } from "y-protocols/awareness";
 import { applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
+import SharedTerminal from "../components/Terminal.jsx";
 import Editor from "@monaco-editor/react";
 import socket from "../socket/socket.js";
 import FileTree from "../components/FileTree.jsx";
@@ -65,7 +66,9 @@ function EditorPage() {
       return;
     }
 
-    console.log("SOCKET ID:", socket.id);
+    socket.on("connect", () => {
+      console.log("SOCKET ID:", socket.id);
+    });
 
     awarenessRef.current = new Awareness(awarenessDocRef.current);
 
@@ -101,10 +104,6 @@ function EditorPage() {
 
     if (!model) {
       return;
-    }
-
-    if (bindingRef.current) {
-      bindingRef.current.destroy();
     }
 
     bindingRef.current = new MonacoBinding(
@@ -230,13 +229,6 @@ function EditorPage() {
         ydocRef.current,
         new Uint8Array(update)
       );
-
-      setFiles(prev => ({
-        ...prev,
-        [path]: {
-          ...prev[path],
-        },
-      }));
     };
 
     const handleYjsUpdate = ({ path, update }) => {
@@ -248,13 +240,6 @@ function EditorPage() {
         ydocRef.current,
         new Uint8Array(update)
       );
-
-      setFiles(prev => ({
-        ...prev,
-        [path]: {
-          ...prev[path],
-        },
-      }));
     };
 
     const handleAwarenessUpdate = ({ update }) => {
@@ -268,7 +253,6 @@ function EditorPage() {
         "remote"
       );
 
-      console.log([...awarenessRef.current.getStates().entries()]);
       buildAwarenessStyles();
     };
 
@@ -298,28 +282,19 @@ function EditorPage() {
 
   useEffect(() => {
     if (!activeFile) {
-      if (bindingRef.current) {
-        bindingRef.current.destroy();
-        bindingRef.current = null;
-      }
-
-      if (ydocRef.current) {
-        ydocRef.current.destroy();
-        ydocRef.current = null;
-      }
 
       return;
     }
 
-    if (bindingRef.current) {
-      bindingRef.current.destroy();
-      bindingRef.current = null;
-    }
+    // if (bindingRef.current) {
+    //   bindingRef.current.destroy();
+    //   bindingRef.current = null;
+    // }
 
-    if (ydocRef.current) {
-      ydocRef.current.destroy();
-      ydocRef.current = null;
-    }
+    // if (ydocRef.current) {
+    //   ydocRef.current.destroy();
+    //   ydocRef.current = null;
+    // }
 
     ydocRef.current = new Y.Doc();
     attachYjsBinding();
@@ -379,7 +354,12 @@ function EditorPage() {
     awareness.on("update", handler);
 
     return () => {
-      awareness.off("update", handler);
+      try{
+        awareness.off("update", handler);
+      }
+      catch(err){
+        console.error("Error removing awareness update listener:", err);
+      }
     };
 
   }, []);
@@ -405,6 +385,17 @@ function EditorPage() {
     socket.emit("delete-file", { roomId, path, });
   };
 
+  const runCurrentFile = () => {
+    if (!activeFile) {
+      return;
+    }
+    socket.emit("terminal-command",
+      {
+        roomId,
+        command: `node ${activeFile}`,
+      });
+    };
+
   return (
     <div style = {{
       display: "flex",
@@ -426,12 +417,18 @@ function EditorPage() {
           onDelete={deleteFile}
         />
       </div>
-      <div style={{ flex: 1, padding: "20px" }}>
+      <div style={{ flex: 1, 
+                    padding: "20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",
+                  }}>
 
       <h2>Workspace: {roomId}</h2>
       <p>Users online: {onlineUsers}</p>
 
       <Editor
+        key={activeFile}
         height="80vh"
         language={files[activeFile]?.language || "plaintext"}
         defaultValue=""
@@ -440,6 +437,8 @@ function EditorPage() {
         onMount={handleEditorDidMount}
         // onChange={handleCodeChange}
       />
+      <button onClick={runCurrentFile}> ▶ Run </button>
+      <SharedTerminal roomId={roomId} />
 
       </div>
     </div>

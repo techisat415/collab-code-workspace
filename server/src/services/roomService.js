@@ -1,6 +1,7 @@
 import prisma from "../lib/prisma.js";
 import activeRooms from "../store/activeRooms.js";
 import roomDocs from "../store/roomDocs.js";
+import { writeWorkspaceFile } from "./fileSyncService.js"; 
 import * as Y from "yjs";
 
 function getFilePath(file) {
@@ -131,6 +132,8 @@ export async function saveRoom(roomId){
         const file = room.files[path];
         const doc = roomDocs[`${roomId}:${path}`];
         const content = doc?.getText("content").toString() || "";
+
+        await writeWorkspaceFile(roomId, path, content);
 
         console.log("Saving file", file, content);
 

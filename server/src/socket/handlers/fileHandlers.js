@@ -1,5 +1,6 @@
 import activeRooms from "../../store/activeRooms.js";
 import detectLanguage from "../../utils/detectLanguage.js";
+import { createWorkspaceFile, renameWorkspaceFile, deleteWorkspaceFile } from "../../services/fileSyncService.js";
 import prisma from "../../lib/prisma.js";
 import * as Y from "yjs";
 import roomDocs from "../../store/roomDocs.js";
@@ -11,6 +12,8 @@ function getFileName(filePath) {
 export default function fileHandlers(socket, io){
 
   socket.on("create-file", async ({ roomId, path }) => {
+
+    await createWorkspaceFile(roomId, path);
     const room = activeRooms[roomId];
     if (!room) return;
     if (room.files[path]) {
@@ -51,6 +54,7 @@ export default function fileHandlers(socket, io){
   });
 
   socket.on("rename-file", async ({ roomId, oldPath, newPath }) => {
+    await renameWorkspaceFile(roomId, oldPath, newPath);
     console.log("RENAME RECEIVED", oldPath, newPath);
     const room = activeRooms[roomId];
     if (!room || !room.files[oldPath] || room.files[newPath]) return;
@@ -100,6 +104,7 @@ export default function fileHandlers(socket, io){
   
 
   socket.on("delete-file", async ({ roomId, path }) => {
+    await deleteWorkspaceFile(roomId, path);
     console.log("DELETE RECEIVED", path);
     const room = activeRooms[roomId];
     if (!room) return;

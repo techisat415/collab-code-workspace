@@ -1,6 +1,8 @@
 import roomHandlers from "./handlers/roomHandlers.js";
 import editorHandlers from "./handlers/editorHandlers.js";
 import fileHandlers from "./handlers/fileHandlers.js";
+import runHandlers from "./handlers/runHandlers.js";
+import terminalHandlers from "./handlers/terminalHandlers.js";
 
 export default function registerSocketHandlers(io) {
 
@@ -10,5 +12,7 @@ export default function registerSocketHandlers(io) {
     roomHandlers(socket, io);
     editorHandlers(socket, io);
     fileHandlers(socket, io);
+    runHandlers(socket);
+    terminalHandlers(socket);
   });
 }
