@@ -8,23 +8,52 @@ datasource db {
 }
 
 model Room {
-
-  id Int @id @default(autoincrement())
-  roomId String @unique
-  files File[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id        Int               @id @default(autoincrement())
+  roomId    String            @unique
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  ownerId   String
+  files     File[]
+  owner     User              @relation("RoomOwner", fields: [ownerId], references: [id])
+  members   WorkspaceMember[]
 }
 
 model File {
-
-  id Int @id @default(autoincrement())
-  name String
-  path String
+  id       Int    @id @default(autoincrement())
+  name     String
   language String
-  content String @default("")
-  roomId Int
-  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  content  String @default("")
+  roomId   Int
+  path     String
+  room     Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
   @@unique([roomId, path])
+}
+
+model User {
+  id           String            @id @default(cuid())
+  email        String            @unique
+  username     String            @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime          @default(now())
+  ownedRooms   Room[]            @relation("RoomOwner")
+  workspaces   WorkspaceMember[]
+}
+
+model WorkspaceMember {
+  id          Int           @id @default(autoincrement())
+  userId      String
+  workspaceId Int
+  role        WorkspaceRole
+  joinedAt    DateTime      @default(now())
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Room          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+}
+
+enum WorkspaceRole {
+  EDITOR
+  VIEWER
 }

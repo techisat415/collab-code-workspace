@@ -4,16 +4,20 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import http from "http";
+import cookieParser from "cookie-parser";
 
 import { Server } from "socket.io";
 
 import registerSocketHandlers from "./socket/index.js";
 import startAutosaveService from "./services/autosaveService.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
+app.use("/auth", authRoutes);
 
 app.get("/", (req, res) => {
   res.json({
