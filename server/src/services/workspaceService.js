@@ -11,12 +11,12 @@ function run(command) {
 
 export async function ensureWorkspace(roomId) {
   await run(
-    `docker exec collab-ide mkdir -p /workspace/room-${roomId}`
+    `docker exec collab-1 mkdir -p /workspace/room-${roomId}`
   );
 }
 
 export async function deleteWorkspace(roomId) {
   await run(
-    `docker exec collab-ide rm -rf /workspace/room-${roomId}`
+    `docker exec collab-1 rm -rf /workspace/room-${roomId}`
   );
 }

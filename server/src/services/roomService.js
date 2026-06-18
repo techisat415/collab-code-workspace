@@ -2,6 +2,7 @@ import prisma from "../lib/prisma.js";
 import activeRooms from "../store/activeRooms.js";
 import roomDocs from "../store/roomDocs.js";
 import { writeWorkspaceFile } from "./fileSyncService.js"; 
+import { ensureWorkspace } from "./workspaceService.js";
 import * as Y from "yjs";
 
 function getFilePath(file) {
@@ -25,6 +26,8 @@ function getOrCreateDoc(file, roomId, filePath) {
 }
 
 export async function loadRoom(roomId, socketId){
+
+    await ensureWorkspace(roomId);
     let roomInMemory = activeRooms[roomId];
 
     if(roomInMemory){
@@ -76,7 +79,7 @@ export async function loadRoom(roomId, socketId){
                 files: {
                     create: {
                     name: "main.js",
-                            path: "main.js",
+                    path: "main.js",
                     language: "javascript",
                     content: "",
                     }
@@ -86,7 +89,7 @@ export async function loadRoom(roomId, socketId){
                 files: true,
             }
         });
-
+        await writeWorkspaceFile(roomId, "main.js", "");
         console.log(`Room ${roomId} created in DB with default file.`);
         console.log(JSON.stringify(room.files, null, 2));
     }
@@ -102,6 +105,9 @@ export async function loadRoom(roomId, socketId){
             language: file.language || "plaintext",
         };
     });
+    for(const file of room.files){
+        await writeWorkspaceFile(roomId, file.path, file.content || "");
+    }
 
     activeRooms[roomId] = {
         files,
