@@ -42,7 +42,7 @@ export default function SharedTerminal({ roomId }) {
         console.log("Terminal initialized and fit to container.");
         console.log("rows:", term.rows, "cols:", term.cols);
         term.write("Welcome to the shared terminal!\r\n");
-        term.write("$ ");
+        term.write("~/ $ ");
       }, 0);
     }
 
@@ -75,7 +75,7 @@ export default function SharedTerminal({ roomId }) {
 
     const handleOutput = (output) => {
       term.write(output);
-      term.write("\r\n$ ");
+      term.write("\r\n~/ $ ");
       term.scrollToBottom();
     };
     

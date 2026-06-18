@@ -18,10 +18,7 @@ function normalizePath(path) {
   return "/" + parts.join("/");
 }
 
-export async function executeTerminalCommand(
-  roomId,
-  command
-) {
+export async function executeTerminalCommand( roomId, command) {
 
   if (!roomTerminals[roomId]) {
     roomTerminals[roomId] = {
@@ -30,50 +27,35 @@ export async function executeTerminalCommand(
   }
 
   const terminal = roomTerminals[roomId];
-
   const trimmed = command.trim();
 
-  //
-  // HANDLE cd
-  //
-  if (
-    trimmed === "cd" ||
-    trimmed.startsWith("cd ")
-  ) {
+  const workspaceRoot = `/workspace/room-${roomId}`;
 
-    let target =
-      trimmed.slice(2).trim();
+  if (trimmed === "cd" || trimmed.startsWith("cd ")) {
+    let target = trimmed.slice(2).trim();
 
     if (!target) {
-      target = `/workspace/room-${roomId}`;
+      terminal.cwd = workspaceRoot;
+      return "~";
     }
 
-    if (target.startsWith("/")) {
-      terminal.cwd =
-        normalizePath(target);
-    } else {
-      terminal.cwd =
-        normalizePath(
-          `${terminal.cwd}/${target}`
-        );
+    const newPath = target.startsWith("/") ? normalizePath(target) : normalizePath(`${terminal.cwd}/${target}`);
+
+    if (!newPath.startsWith(workspaceRoot)) {
+      return "Permission denied: You naughty boi! I see what you are trying to do there.";
     }
 
-    return terminal.cwd;
+    try{
+      await runInWorkspace(roomId, `[ -d "${newPath}" ]`, workspaceRoot);
+      terminal.cwd = newPath;
+      return terminal.cwd.replace(workspaceRoot, "~");
+    }
+    catch {
+      return `cd: no such file or directory: ${target}`;
+    }
   }
 
-  //
-  // HANDLE pwd
-  //
-  if (trimmed === "pwd") {
-    return terminal.cwd;
-  }
+  if (trimmed === "pwd") return terminal.cwd.replace(workspaceRoot, "~");
 
-  //
-  // EVERYTHING ELSE
-  //
-  return runInWorkspace(
-    roomId,
-    command,
-    terminal.cwd
-  );
+  return runInWorkspace(roomId, command, terminal.cwd);
 }
