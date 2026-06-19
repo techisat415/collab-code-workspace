@@ -1,6 +1,6 @@
 import prisma from "../lib/prisma.js";
 import { hashPassword, comparePassword } from "../utils/hash.js";
-import { generateToken } from "../utils/jwt.js";
+import { generateToken, verifyToken } from "../utils/jwt.js";
 
 export async function registerUser(req, res){
     try{
