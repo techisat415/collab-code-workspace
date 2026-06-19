@@ -72,26 +72,7 @@ export async function loadRoom(roomId, socketId){
     console.log("FILES IN DB:",room?.files);
 
     if(!room){
-        room = await prisma.room.create({
-            data: {
-                roomId,
-
-                files: {
-                    create: {
-                    name: "main.js",
-                    path: "main.js",
-                    language: "javascript",
-                    content: "",
-                    }
-                },
-            },
-            include: {
-                files: true,
-            }
-        });
-        await writeWorkspaceFile(roomId, "main.js", "");
-        console.log(`Room ${roomId} created in DB with default file.`);
-        console.log(JSON.stringify(room.files, null, 2));
+        throw new Error("Room not found in DB");
     }
 
     const files = {};

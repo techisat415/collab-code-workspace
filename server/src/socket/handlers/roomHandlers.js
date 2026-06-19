@@ -1,8 +1,15 @@
 import activeRooms from "../../store/activeRooms.js";
 import { loadRoom, saveRoom } from "../../services/roomService.js";
+import { canAccessWorkspace } from "../../services/permissionService.js";
 
 export default function roomHandlers(socket, io){
     socket.on("join-room", async(roomId) => {
+
+        const allowed = await canAccessWorkspace(socket.user.userId, roomId);
+        if(!allowed){
+            socket.emit("error", "You do not have permission to access this workspace.");
+            return;
+        }r
         socket.join(roomId);
 
         const { room, source } = await loadRoom(roomId, socket.id);

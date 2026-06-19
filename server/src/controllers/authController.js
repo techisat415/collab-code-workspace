@@ -1,11 +1,11 @@
-import prisma from "../prisma.js";
+import prisma from "../lib/prisma.js";
 import { hashPassword, comparePassword } from "../utils/hash.js";
 import { generateToken } from "../utils/jwt.js";
 
 export async function registerUser(req, res){
     try{
         const { username, email, name, password } = req.body;
-        const hashedPassword = await hashPassword(password);
+        const passwordHash = await hashPassword(password);
 
         const existingUser = await prisma.user.findFirst({
             where: {
@@ -25,14 +25,14 @@ export async function registerUser(req, res){
                 username,
                 email,
                 name,
-                hashedPassword,
+                passwordHash,
             }
         })
         res.status(201).json({ userId: user.id});
     }
     catch(err){
         console.error(err);
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).json({ error: "Internal server error", errorDetails: err.message });
     }
 }
 
@@ -47,7 +47,7 @@ export async function loginUser(req, res){
             return res.status(401).json({ error: "Invalid email or password" });
         }
 
-        const passwordMatch = await comparePassword(password, user.hashedPassword);
+        const passwordMatch = await comparePassword(password, user.passwordHash);
         if(!passwordMatch){
             return res.status(401).json({ error: "Invalid email or password" });
         }
@@ -69,7 +69,7 @@ export async function loginUser(req, res){
     }
     catch(err){
         console.error(err);
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).json({ error: "Internal server error", errorDetails: err.message });
     }
 }
 
@@ -111,6 +111,6 @@ export async function getCurrentUser(req, res){
     }
     catch(err){
         console.error(err);
-        res.status(401).json({ error: "Internal server error" });
+        res.status(401).json({ error: "Internal server error", errorDetails: err.message });
     }
 }
