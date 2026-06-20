@@ -21,6 +21,26 @@ function getUniqueUserCount(io, roomId) {
     return users.size;
 }
 
+function getOnlineUsers(io, roomId) {
+    const room = io.sockets.adapter.rooms.get(roomId);
+    if (!room) return [];
+
+    const users = new Map();
+
+    for (const socketId of room) {
+        const socket = io.sockets.sockets.get(socketId);
+
+        if (socket?.user?.userId) {
+            users.set(socket.user.userId, {
+                userId: socket.user.userId,
+                username: socket.user.username,
+            });
+        }
+    }
+
+    return Array.from(users.values());
+}
+
 export default function roomHandlers(socket, io){
     socket.on("join-room", async(roomId) => {
 
@@ -33,7 +53,6 @@ export default function roomHandlers(socket, io){
             return;
         }
         console.log("access granted");
-
         const { room, source } = await loadRoom(roomId, socket.id);
 
         if(socket.disconnected){
@@ -42,7 +61,11 @@ export default function roomHandlers(socket, io){
         }
 
         socket.join(roomId);
-        io.to(roomId).emit("room-users", getUniqueUserCount(io, roomId));
+        console.log("ONLINE USERS:", getOnlineUsers(io, roomId));
+        io.to(roomId).emit("room-users", {
+            count: getUniqueUserCount(io, roomId),
+            users: getOnlineUsers(io, roomId),
+        });
         socket.emit("files-updated", room.files);
 
         console.log(`Socket ${socket.id} joined room ${roomId}. Room loaded from ${source}.`);
@@ -57,7 +80,10 @@ export default function roomHandlers(socket, io){
             console.log(`Room ${roomId} has ${count} unique users after disconnection.`);
 
      
-            io.to(roomId).emit("room-users", count);
+            io.to(roomId).emit("room-users", {
+                count,
+                users: getOnlineUsers(io, roomId),
+            });
 
             if(count === 0){
                 await saveRoom(roomId);

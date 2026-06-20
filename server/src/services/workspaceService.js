@@ -55,7 +55,7 @@ export async function createWorkspace(ownerId, name) {
     data: {
       userId: ownerId,
       workspaceId: room.id,
-      role: "EDITOR",
+      role: "OWNER",
     }
   })
 

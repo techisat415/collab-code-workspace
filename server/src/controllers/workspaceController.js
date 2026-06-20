@@ -111,3 +111,44 @@ export async function getWorkspaceController(req, res) {
     res.status(500).json({error: "Failed to fetch workspace"});
   }
 }
+
+export async function getWorkspaceMembersController(req, res) {
+  try {
+
+    const { roomId } = req.params;
+    const room = await prisma.room.findUnique({
+      where: { roomId },
+
+      include: {
+        members:{
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                name: true,
+              }
+            }
+          }
+        }
+      },
+    });
+
+    if (!room) return res.status(404).json({error: "Workspace not found"});
+
+    res.json(
+      room.members.map(member => ({
+        id: member.user.id,
+        username: member.user.username,
+        name: member.user.name,
+        role: member.role,
+      }))
+    );
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: "Failed to fetch members",
+    });
+  }
+}

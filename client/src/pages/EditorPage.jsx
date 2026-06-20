@@ -17,6 +17,9 @@ function EditorPage() {
   const [activeFile, setActiveFile] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(0);
   const [workspaceName, setWorkspaceName] = useState("");
+  const [members, setMembers] = useState([]);
+  const [showMembers, setShowMembers] = useState(false);
+  const [onlineMembers, setOnlineMembers] = useState([]);
 
   const editorRef = useRef(null);
   const ydocRef = useRef(null);
@@ -166,7 +169,7 @@ function EditorPage() {
     socket.emit("join-room", roomId);
 
     const handleFilesUpdated = (incomingFiles) => {
-      if(!incomingFiles){
+      if (!incomingFiles) {
         console.log("No files received from server.");
       };
       console.log("Files received from server:", incomingFiles);
@@ -175,7 +178,7 @@ function EditorPage() {
       const filePaths = Object.keys(incomingFiles);
 
       console.log("File paths in room:", filePaths);
-      if(filePaths.length > 0){
+      if (filePaths.length > 0) {
         setActiveFile(filePaths[0]);
         console.log(`Active file set to ${filePaths[0]}`);
       }
@@ -183,8 +186,8 @@ function EditorPage() {
 
     const handleFileCreated = ({ path, name, language, content }) => {
       setFiles(prev => ({
-      ...prev,
-      [path]: {
+        ...prev,
+        [path]: {
           name,
           path,
           language,
@@ -222,17 +225,18 @@ function EditorPage() {
         delete copy[path];
         const remainingFiles = Object.keys(copy);
         setActiveFile(
-            remainingFiles.length > 0
-              ? remainingFiles[0]
-              : null
-          );
+          remainingFiles.length > 0
+            ? remainingFiles[0]
+            : null
+        );
         return copy;
       });
     };
 
-    const handleRoomUsers = (count) => {
+    const handleRoomUsers = ({count, users}) => {
       console.log("ROOM USERS RECEIVED:", count);
       setOnlineUsers(count);
+      setOnlineMembers(users);
     };
 
     const handleYjsState = ({ path, update }) => {
@@ -294,6 +298,19 @@ function EditorPage() {
     };
 
   }, [roomId]);
+
+
+  useEffect(() => {
+      async function loadMembers() {
+        try {
+          const res = await api.get(`/workspace/${roomId}/members`);
+          setMembers(res.data);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      loadMembers();
+    }, [roomId]);
 
   useEffect(() => {
     if (!activeFile) {
@@ -369,19 +386,19 @@ function EditorPage() {
     awareness.on("update", handler);
 
     return () => {
-      try{
+      try {
         awareness.off("update", handler);
       }
-      catch(err){
+      catch (err) {
         console.error("Error removing awareness update listener:", err);
       }
     };
 
   }, []);
 
-  const createFile = () =>{
+  const createFile = () => {
     const path = prompt("Enter file path:");
-    if(!path) return;
+    if (!path) return;
 
     socket.emit("create-file", {
       roomId,
@@ -392,7 +409,7 @@ function EditorPage() {
   const renameFile = (oldPath) => {
     const newPath = prompt("New file path:", oldPath);
     if (!newPath) return;
-    
+
     socket.emit("rename-file", { roomId, oldPath, newPath, });
   };
 
@@ -409,17 +426,17 @@ function EditorPage() {
         roomId,
         command: `node ${activeFile}`,
       });
-    };
+  };
 
   return (
-    <div style = {{
+    <div style={{
       display: "flex",
       height: "100vh",
     }}>
       <div style={{
-              width: "250px",
-              borderRight: "1px solid #333",
-              padding: "10px",
+        width: "250px",
+        borderRight: "1px solid #333",
+        padding: "10px",
       }}>
         <button onClick={createFile}> + New File</button>
 
@@ -432,28 +449,47 @@ function EditorPage() {
           onDelete={deleteFile}
         />
       </div>
-      <div style={{ flex: 1, 
-                    padding: "20px",
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                  }}>
+      <div style={{
+        flex: 1,
+        padding: "20px",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}>
 
-      <h2>Workspace: {workspaceName || roomId}</h2>
-      <p>Users online: {onlineUsers}</p>
+        <h2>Workspace: {workspaceName || roomId}</h2>
+        <div style={{
+          cursor: "pointer",
+          marginBottom: "10px",
+        }}
+          onClick={() => setShowMembers(!showMembers)}
+        >
+          Users online: {onlineUsers} {showMembers ? " ▲" : " ▼"}
+        </div>
+        {showMembers && (<div style={{
+          border: "1px solid #444",
+          padding: "10px",
+          marginBottom: "10px",
+        }}
+        >
+          {onlineMembers.map(user => (<div key={user.userId}>
+            {user.username}
+            {user.role === "OWNER" ? " (Owner)" : ""}</div>))}
+        </div>
+        )}
 
-      <Editor
-        key={activeFile}
-        height="80vh"
-        language={files[activeFile]?.language || "plaintext"}
-        defaultValue=""
-        theme="vs-dark"
-        
-        onMount={handleEditorDidMount}
+        <Editor
+          key={activeFile}
+          height="80vh"
+          language={files[activeFile]?.language || "plaintext"}
+          defaultValue=""
+          theme="vs-dark"
+
+          onMount={handleEditorDidMount}
         // onChange={handleCodeChange}
-      />
-      <button onClick={runCurrentFile}> ▶ Run </button>
-      <SharedTerminal roomId={roomId} />
+        />
+        <button onClick={runCurrentFile}> ▶ Run </button>
+        <SharedTerminal roomId={roomId} />
 
       </div>
     </div>
