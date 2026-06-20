@@ -449,8 +449,9 @@ function EditorPage() {
           onRename={renameFile}
           onDelete={deleteFile}
         />
+        <ChatBox roomId={roomId} />
       </div>
-      <ChatBox roomId={roomId} />
+      
       <div style={{
         flex: 1,
         padding: "20px",
