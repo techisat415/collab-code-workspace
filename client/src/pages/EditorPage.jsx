@@ -9,6 +9,7 @@ import Editor from "@monaco-editor/react";
 import socket from "../socket/socket.js";
 import FileTree from "../components/FileTree.jsx";
 import api from "../api/api.js";
+import ChatBox from "../components/ChatBox.jsx";
 
 function EditorPage() {
 
@@ -449,6 +450,7 @@ function EditorPage() {
           onDelete={deleteFile}
         />
       </div>
+      <ChatBox roomId={roomId} />
       <div style={{
         flex: 1,
         padding: "20px",
