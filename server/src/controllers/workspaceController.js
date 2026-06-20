@@ -28,6 +28,7 @@ export async function getWorkspacesController(req, res) {
 
         select: {
           roomId: true,
+          name: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -83,5 +84,30 @@ export async function joinWorkspaceController(req, res) {
     res.status(500).json({
       error: "Failed to join workspace"
     });
+  }
+}
+
+export async function getWorkspaceController(req, res) {
+  try {
+    const { roomId } = req.params;
+    const room = await prisma.room.findUnique({
+      where: {
+        roomId,
+      },
+
+      select: {
+        roomId: true,
+        name: true,
+      },
+    });
+
+    if (!room) return res.status(404).json({error: "Workspace not found"});
+    res.json(room);
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({error: "Failed to fetch workspace"});
   }
 }

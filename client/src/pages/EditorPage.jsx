@@ -8,6 +8,7 @@ import SharedTerminal from "../components/Terminal.jsx";
 import Editor from "@monaco-editor/react";
 import socket from "../socket/socket.js";
 import FileTree from "../components/FileTree.jsx";
+import api from "../api/api.js";
 
 function EditorPage() {
 
@@ -15,6 +16,7 @@ function EditorPage() {
   const [files, setFiles] = useState({});
   const [activeFile, setActiveFile] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(0);
+  const [workspaceName, setWorkspaceName] = useState("");
 
   const editorRef = useRef(null);
   const ydocRef = useRef(null);
@@ -138,6 +140,18 @@ function EditorPage() {
       awarenessRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    async function loadWorkspace() {
+      try {
+        const res = await api.get(`/workspace/${roomId}`);
+        setWorkspaceName(res.data.name);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadWorkspace();
+  }, [roomId]);
 
   useEffect(() => {
     activeFileRef.current = activeFile;
@@ -425,7 +439,7 @@ function EditorPage() {
                     overflow: "hidden",
                   }}>
 
-      <h2>Workspace: {roomId}</h2>
+      <h2>Workspace: {workspaceName || roomId}</h2>
       <p>Users online: {onlineUsers}</p>
 
       <Editor
