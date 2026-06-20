@@ -27,11 +27,6 @@ function App() {
           element={<Home />}
         />
 
-        <Route
-          path="/editor/:roomId"
-          element={<EditorPage />}
-        />
-
       </Routes>
 
   );

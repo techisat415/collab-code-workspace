@@ -3,9 +3,8 @@ import { createWorkspace } from "../services/workspaceService.js";
 
 export async function createWorkspaceController(req, res) {
   try {
-    const room = await createWorkspace(
-      req.user.userId
-    );
+    const { name } = req.body;
+    const room = await createWorkspace(req.user.userId, name);
     res.status(201).json(room);
 
   } catch (err) {

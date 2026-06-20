@@ -24,13 +24,18 @@ export async function deleteWorkspace(roomId) {
   );
 }
 
-export async function createWorkspace(ownerId) {
+export async function createWorkspace(ownerId, name) {
 
   const roomId = crypto.randomUUID();
   const room = await prisma.room.create({
     data: {
       roomId,
-      ownerId,
+      name,
+      owner: {
+        connect: {
+          id: ownerId,
+        }
+      },
 
       files: {
         create: {
@@ -45,6 +50,14 @@ export async function createWorkspace(ownerId) {
       files: true,
     }
   });
+
+  await prisma.workspaceMember.create({
+    data: {
+      userId: ownerId,
+      workspaceId: room.id,
+      role: "EDITOR",
+    }
+  })
 
   await ensureWorkspace(roomId);
   await createWorkspaceFile(roomId, "main.js");

@@ -10,11 +10,14 @@ datasource db {
 model Room {
   id        Int               @id @default(autoincrement())
   roomId    String            @unique
+  name      String
+
+  ownerId   String
+  owner     User              @relation("RoomOwner", fields: [ownerId], references: [id])
+
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
-  ownerId   String?
   files     File[]
-  owner     User?              @relation("RoomOwner", fields: [ownerId], references: [id])
   members   WorkspaceMember[]
 }
 

@@ -8,7 +8,7 @@ function Home(){
     const handleJoin = () => {
         if(!roomId) return;
 
-        navigate(`/editor/${roomId}`);
+        navigate(`/workspace/${roomId}`);
     };
 
     return(

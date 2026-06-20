@@ -18,8 +18,10 @@ export default function Dashboard() {
   }, []);
 
   async function createWorkspace() {
-    const res = await api.post("/workspace");
+    const name = prompt("Enter workspace name:");
+    if(!name) return;
 
+    const res = await api.post("/workspace", { name });
     navigate(`/workspace/${res.data.roomId}`);
   }
 
@@ -57,7 +59,10 @@ export default function Dashboard() {
             )
         }
         >
-          {workspace.roomId}
+          <div>
+            <strong>{workspace.name}</strong><br />
+            <small>{workspace.roomId}</small>
+            </div>
         </div>
       ))}
 
