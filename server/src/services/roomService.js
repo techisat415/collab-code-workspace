@@ -31,7 +31,6 @@ export async function loadRoom(roomId, socketId){
     let roomInMemory = activeRooms[roomId];
 
     if(roomInMemory){
-        roomInMemory.users.add(socketId);
         return{
             room: roomInMemory,
             source: "RAM",
@@ -52,22 +51,21 @@ export async function loadRoom(roomId, socketId){
 
 
     if(room && room.files.length === 0){
+        await prisma.file.create({
+            data:{
+                roomId: room.id,
+                name:"main.js",
+                path:"main.js",
+                language:"javascript",
+                content:""
+            }
+        });
 
-    await prisma.file.create({
-        data:{
-            roomId: room.id,
-            name:"main.js",
-            path:"main.js",
-            language:"javascript",
-            content:""
-        }
-    });
-
-    room = await prisma.room.findUnique({
-        where:{ roomId },
-        include:{ files:true }
-    });
-}
+        room = await prisma.room.findUnique({
+            where:{ roomId },
+            include:{ files:true }
+        });
+    }
 
     console.log("FILES IN DB:",room?.files);
 
@@ -93,7 +91,6 @@ export async function loadRoom(roomId, socketId){
     activeRooms[roomId] = {
         files,
         activeFile: room.files[0] ? getFilePath(room.files[0]) : null,
-        users: new Set([socketId]),
         lastActivity: Date.now(),
         lastSaved: Date.now(),
     };

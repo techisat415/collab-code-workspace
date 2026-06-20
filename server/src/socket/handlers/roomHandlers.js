@@ -2,18 +2,47 @@ import activeRooms from "../../store/activeRooms.js";
 import { loadRoom, saveRoom } from "../../services/roomService.js";
 import { canAccessWorkspace } from "../../services/permissionService.js";
 
+function getRoomUserCount(io, roomId) {
+    const clients = io.sockets.adapter.rooms.get(roomId);
+
+    return clients ? clients.size : 0;
+}
+
+function getUniqueUserCount(io, roomId) {
+    const room = io.sockets.adapter.rooms.get(roomId);
+    if (!room) return 0;
+
+    const users = new Set();
+    for (const socketId of room) {
+        const socket = io.sockets.sockets.get(socketId);
+        if (socket?.user?.userId) users.add(socket.user.userId);
+    }
+
+    return users.size;
+}
+
 export default function roomHandlers(socket, io){
     socket.on("join-room", async(roomId) => {
 
+        console.log("socket.user= ", socket.user);
+
         const allowed = await canAccessWorkspace(socket.user.userId, roomId);
+        console.log('allowed= ', allowed);
         if(!allowed){
             socket.emit("error", "You do not have permission to access this workspace.");
             return;
-        }r
-        socket.join(roomId);
+        }
+        console.log("access granted");
 
         const { room, source } = await loadRoom(roomId, socket.id);
-        io.to(roomId).emit("room-users", room.users.size);
+
+        if(socket.disconnected){
+            console.log(`Socket ${socket.id} disconnected before room ${roomId} could be loaded.`);
+            return;
+        }
+
+        socket.join(roomId);
+        io.to(roomId).emit("room-users", getUniqueUserCount(io, roomId));
         socket.emit("files-updated", room.files);
 
         console.log(`Socket ${socket.id} joined room ${roomId}. Room loaded from ${source}.`);
@@ -24,11 +53,13 @@ export default function roomHandlers(socket, io){
 
         for(const roomId in activeRooms){
 
-            const room = activeRooms[roomId];
-            room.users.delete(socket.id);
-            io.to(roomId).emit("room-users", room.users.size);
+            const count = getUniqueUserCount(io, roomId);
+            console.log(`Room ${roomId} has ${count} unique users after disconnection.`);
 
-            if(room.users.size === 0){
+     
+            io.to(roomId).emit("room-users", count);
+
+            if(count === 0){
                 await saveRoom(roomId);
                 delete activeRooms[roomId];
                 console.log(`Room ${roomId} has been saved and removed from memory due to inactivity.`);

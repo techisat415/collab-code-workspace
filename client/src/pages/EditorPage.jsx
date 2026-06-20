@@ -217,6 +217,7 @@ function EditorPage() {
     };
 
     const handleRoomUsers = (count) => {
+      console.log("ROOM USERS RECEIVED:", count);
       setOnlineUsers(count);
     };
 

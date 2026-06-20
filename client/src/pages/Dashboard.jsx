@@ -24,11 +24,10 @@ export default function Dashboard() {
   }
 
   async function joinWorkspace() {
+    if(!joinId.trim()) return;
     await api.post(`/workspace/${joinId}/join`);
 
-    loadWorkspaces();
-
-    setJoinId("");
+    navigate(`/workspace/${joinId}`);
   }
 
   return (

@@ -5,6 +5,9 @@ export async function canAccessWorkspace(userId, roomId) {
       where: {
         roomId,
       },
+      include: {
+        members: true,
+      },
     });
 
   if (!room) return false;
