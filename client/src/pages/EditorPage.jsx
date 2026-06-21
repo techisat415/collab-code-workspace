@@ -468,6 +468,19 @@ function EditorPage() {
           onClick={() => setShowMembers(!showMembers)}
         >
           Users online: {onlineUsers} {showMembers ? " ▲" : " ▼"}
+          <button
+  onClick={() => {
+
+    const link =
+      `${window.location.origin}/invite/${roomId}`;
+
+    navigator.clipboard.writeText(link);
+
+    alert("Invite link copied!");
+  }}
+>
+  Invite
+</button>
         </div>
         {showMembers && (<div style={{
           border: "1px solid #444",

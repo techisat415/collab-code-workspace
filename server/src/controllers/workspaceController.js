@@ -152,3 +152,53 @@ export async function getWorkspaceMembersController(req, res) {
     });
   }
 }
+
+export async function getInviteInfoController(req, res) {
+  try {
+
+    const { roomId } = req.params;
+
+    const room = await prisma.room.findUnique({
+      where: { roomId },
+
+      include: {
+        owner: {
+          select: {
+            username: true,
+          }
+        }
+      }
+    });
+
+    if (!room) {
+      return res.status(404).json({
+        error: "Workspace not found",
+      });
+    }
+
+    const existingMember =
+      await prisma.workspaceMember.findUnique({
+        where: {
+          userId_workspaceId: {
+            userId: req.user.userId,
+            workspaceId: room.id,
+          }
+        }
+      });
+
+    res.json({
+      roomId: room.roomId,
+      name: room.name,
+      owner: room.owner.username,
+      isMember: !!existingMember,
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: "Failed to load invite",
+    });
+  }
+}
