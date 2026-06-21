@@ -129,7 +129,7 @@ function FileTreeNode({
               }}
               title="Rename"
             >
-              👀
+              ✏️
             </button>
           )}
           {onDelete && (

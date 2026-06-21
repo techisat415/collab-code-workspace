@@ -49,7 +49,10 @@
 .ide-shell {
   display: flex;
   flex-direction: column;
+  width: 100vw;
   height: 100vh;
+  margin: 0;
+  border-radius: 0;
   background: var(--bg-app);
   color: var(--text);
   font-family: var(--font-ui);
@@ -306,7 +309,7 @@
   flex-direction: column;
   background: var(--bg-panel);
   min-height: 0;
-  transition: width 0.2s var(--ease);
+  /* transition: width 0.2s var(--ease); */
   overflow: hidden;
 }
 
@@ -353,6 +356,18 @@
 .panel.is-collapsed .panel__head,
 .panel.is-collapsed .panel__body {
   display: none;
+}
+
+.resize-handle {
+  width: 4px;
+  cursor: col-resize;
+  flex-shrink: 0;
+  background: transparent;
+}
+
+
+.resize-handle:hover {
+  background: var(--accent);
 }
 
 /* collapsed rail (drawer pull) — the recurring "grab here" affordance

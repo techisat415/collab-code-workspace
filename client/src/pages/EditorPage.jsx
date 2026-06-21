@@ -75,6 +75,22 @@ function EditorPage() {
   const bindingRef = useRef(null);
   const activeFileRef = useRef(null);
 
+  const [explorerWidth, setExplorerWidth] = useState(() => {
+    return Number(localStorage.getItem("explorerWidth")) || 250;
+  });
+
+  const [chatWidth, setChatWidth] = useState(() => {
+    return Number(localStorage.getItem("chatWidth")) || 290;
+});
+
+  useEffect(() => {
+    localStorage.setItem("explorerWidth", explorerWidth);
+  }, [explorerWidth]);
+
+  useEffect(() => {
+    localStorage.setItem("chatWidth", chatWidth);
+  }, [chatWidth]);
+
   const buildAwarenessStyles = () => {
     const awareness = awarenessRef.current;
 
@@ -212,8 +228,53 @@ function EditorPage() {
     attachYjsBinding();
   }
 
-  const [role, setRole] = useState(null);
+  function startExplorerResize(e) {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = explorerWidth;
 
+    function handleMouseMove(ev) {
+      const nextWidth = startWidth + (ev.clientX - startX);
+      setExplorerWidth( Math.max(180, Math.min(500, nextWidth)));
+    }
+    function handleMouseUp() {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    }
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  }
+
+  function startChatResize(e) {
+
+  e.preventDefault();
+
+  const startX = e.clientX;
+  const startWidth = chatWidth;
+
+  function handleMouseMove(ev) {
+
+    const nextWidth =
+      startWidth -
+      (ev.clientX - startX);
+
+    setChatWidth(
+      Math.max(
+        220,
+        Math.min(500, nextWidth)
+      )
+    );
+  }
+
+  function handleMouseUp() {
+    window.removeEventListener("mousemove", handleMouseMove);
+    window.removeEventListener("mouseup", handleMouseUp);
+  }
+  window.addEventListener("mousemove", handleMouseMove);
+  window.addEventListener("mouseup", handleMouseUp);
+}
+
+  const [role, setRole] = useState(null);
   useEffect(() => {
     async function loadRole() {
       try {
@@ -587,7 +648,10 @@ function EditorPage() {
       {/* ------------------------------------------------------------ body --- */}
       <div className="ide-body">
         {/* ----------------------------------------------------- explorer --- */}
-        <aside className={`panel panel--left ${explorerOpen ? "" : "is-collapsed"}`}>
+        <aside className={`panel panel--left ${explorerOpen ? "" : "is-collapsed"}`}
+          style={
+            explorerOpen ? { width: `${explorerWidth}px` } : undefined
+          }>
           <div className="panel__head">
             <span className="panel__head-label">Explorer</span>
             <button className="icon-btn" onClick={() => setExplorerOpen(false)} aria-label="Collapse explorer">
@@ -623,6 +687,8 @@ function EditorPage() {
             <span className="panel__rail-label">Explorer</span>
           </button>
         </aside>
+        {explorerOpen && (<div className="resize-handle" onMouseDown={startExplorerResize}/>
+)}
 
         {/* --------------------------------------------- editor + terminal --- */}
         <main className="ide-main">
@@ -687,7 +753,9 @@ function EditorPage() {
         </main>
 
         {/* ----------------------------------------------------------- chat --- */}
-        <aside className={`panel panel--right ${chatOpen ? "" : "is-collapsed"}`}>
+        {chatOpen && (<div className="resize-handle" onMouseDown={startChatResize}/>)}
+        <aside className={`panel panel--right ${chatOpen ? "" : "is-collapsed"}`}
+          style={chatOpen ? { width: `${chatWidth}px` } : undefined}>
           <div className="panel__head">
             <span className="panel__head-label">Chat</span>
             <button className="icon-btn" onClick={() => setChatOpen(false)} aria-label="Collapse chat">
