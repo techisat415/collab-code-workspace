@@ -1,16 +1,12 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/api";
+import "../styles/auth.css";
 
 export default function Register() {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({
-    username: "",
-    email: "",
-    name: "",
-    password: "",
-  });
+  const [form, setForm] = useState({ username: "", email: "", name: "", password: "", });
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -28,64 +24,129 @@ export default function Register() {
   }
 
   return (
-    <div>
-      <h1>Register</h1>
+    <div className="auth-page">
+      <div className="auth-hero">
+        <div className="blob blob--1" />
+        <div className="blob blob--2" />
+        <div className="blob blob--3" />
+        <div className="blob blob--4" />
 
-      <form onSubmit={handleSubmit}>
-        <input
-          placeholder="Name"
-          value={form.name}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              name: e.target.value,
-            })
-          }
-        />
+        <div className="auth-hero__content">
 
-        <input
-          placeholder="Username"
-          value={form.username}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              username: e.target.value,
-            })
-          }
-        />
+          <h1>
+            Build together.
+            <br />
+            Code together.
+          </h1>
 
-        <input
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              email: e.target.value,
-            })
-          }
-        />
+        </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              password: e.target.value,
-            })
-          }
-        />
+      </div>
+      <div className="auth-card">
 
-        <button type="submit">
-          Register
-        </button>
-      </form>
+        <h1 className="auth-title">
+          Collaborative IDE
+        </h1>
 
-      <p>
-        Already have an account?
-        <Link to="/login"> Login</Link>
-      </p>
+        <p className="auth-subtitle">
+          Create an account to start collaborating.
+        </p>
+
+        <form
+          className="auth-form"
+          onSubmit={handleSubmit}
+        >
+
+          <div className="auth-group">
+            <label className="auth-label">
+              Name
+            </label>
+
+            <input
+              className="auth-input"
+              value={form.name}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  name: e.target.value,
+                })
+              }
+            />
+          </div>
+
+          <div className="auth-group">
+            <label className="auth-label">
+              Username
+            </label>
+
+            <input
+              className="auth-input"
+              value={form.username}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  username: e.target.value,
+                })
+              }
+            />
+          </div>
+
+          <div className="auth-group">
+            <label className="auth-label">
+              Email
+            </label>
+
+            <input
+              className="auth-input"
+              type="email"
+              value={form.email}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  email: e.target.value,
+                })
+              }
+            />
+          </div>
+
+          <div className="auth-group">
+            <label className="auth-label">
+              Password
+            </label>
+
+            <input
+              className="auth-input"
+              type="password"
+              value={form.password}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  password: e.target.value,
+                })
+              }
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="auth-submit"
+          >
+            Create Account
+          </button>
+
+        </form>
+
+        <div className="auth-footer">
+          Already have an account?{" "}
+          <Link
+            className="auth-link"
+            to="/login"
+          >
+            Sign In
+          </Link>
+        </div>
+
+      </div>
     </div>
   );
 }
