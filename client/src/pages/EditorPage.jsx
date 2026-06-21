@@ -10,6 +10,7 @@ import socket from "../socket/socket.js";
 import FileTree from "../components/FileTree.jsx";
 import api from "../api/api.js";
 import ChatBox from "../components/ChatBox.jsx";
+import WorkspaceSettings from "../components/WorkspaceSettings.jsx";
 
 function EditorPage() {
 
@@ -20,6 +21,7 @@ function EditorPage() {
   const [workspaceName, setWorkspaceName] = useState("");
   const [members, setMembers] = useState([]);
   const [showMembers, setShowMembers] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [onlineMembers, setOnlineMembers] = useState([]);
 
   const editorRef = useRef(null);
@@ -166,6 +168,21 @@ function EditorPage() {
     attachYjsBinding();
   }
 
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    async function loadRole() {
+      try {
+        const res = await api.get(`/workspace/${roomId}/me`);
+        setRole(res.data.role);
+      }
+      catch (err) {
+        console.error(err);
+      }
+    }
+    loadRole();
+  }, [roomId]);
+
   useEffect(() => {
     socket.emit("join-room", roomId);
 
@@ -234,7 +251,7 @@ function EditorPage() {
       });
     };
 
-    const handleRoomUsers = ({count, users}) => {
+    const handleRoomUsers = ({ count, users }) => {
       console.log("ROOM USERS RECEIVED:", count);
       setOnlineUsers(count);
       setOnlineMembers(users);
@@ -302,16 +319,16 @@ function EditorPage() {
 
 
   useEffect(() => {
-      async function loadMembers() {
-        try {
-          const res = await api.get(`/workspace/${roomId}/members`);
-          setMembers(res.data);
-        } catch (err) {
-          console.error(err);
-        }
+    async function loadMembers() {
+      try {
+        const res = await api.get(`/workspace/${roomId}/members`);
+        setMembers(res.data);
+      } catch (err) {
+        console.error(err);
       }
-      loadMembers();
-    }, [roomId]);
+    }
+    loadMembers();
+  }, [roomId]);
 
   useEffect(() => {
     if (!activeFile) {
@@ -439,19 +456,19 @@ function EditorPage() {
         borderRight: "1px solid #333",
         padding: "10px",
       }}>
-        <button onClick={createFile}> + New File</button>
+        {role !== "VIEWER" && (<button onClick={createFile}> + New File</button>)}
 
         <hr />
         <FileTree
           files={files}
           activePath={activeFile}
           onSelect={setActiveFile}
-          onRename={renameFile}
-          onDelete={deleteFile}
+          onRename={role !== "VIEWER" ? renameFile : undefined}
+          onDelete={role !== "VIEWER" ? deleteFile : undefined}
         />
         <ChatBox roomId={roomId} />
       </div>
-      
+
       <div style={{
         flex: 1,
         padding: "20px",
@@ -461,6 +478,7 @@ function EditorPage() {
       }}>
 
         <h2>Workspace: {workspaceName || roomId}</h2>
+        {role === "OWNER" && (<button onClick={() => setShowSettings(true)}>⚙ Settings</button>)}
         <div style={{
           cursor: "pointer",
           marginBottom: "10px",
@@ -468,19 +486,12 @@ function EditorPage() {
           onClick={() => setShowMembers(!showMembers)}
         >
           Users online: {onlineUsers} {showMembers ? " ▲" : " ▼"}
-          <button
-  onClick={() => {
-
-    const link =
-      `${window.location.origin}/invite/${roomId}`;
-
-    navigator.clipboard.writeText(link);
-
-    alert("Invite link copied!");
-  }}
->
-  Invite
-</button>
+          {role !== "VIEWER" && (<button
+            onClick={() => {
+              const link = `${window.location.origin}/invite/${roomId}`;
+              navigator.clipboard.writeText(link);
+              alert("Invite link copied!");
+            }}>Invite</button>)}
         </div>
         {showMembers && (<div style={{
           border: "1px solid #444",
@@ -500,14 +511,23 @@ function EditorPage() {
           language={files[activeFile]?.language || "plaintext"}
           defaultValue=""
           theme="vs-dark"
+          options={{
+            readOnly: role === "VIEWER",
+          }}
 
           onMount={handleEditorDidMount}
         // onChange={handleCodeChange}
         />
-        <button onClick={runCurrentFile}> ▶ Run </button>
+        {role !== "VIEWER" && (<button onClick={runCurrentFile}> ▶ Run </button>)}
         <SharedTerminal roomId={roomId} />
 
       </div>
+      {showSettings && (
+        <WorkspaceSettings
+          members={members}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
     </div>
   );
 }

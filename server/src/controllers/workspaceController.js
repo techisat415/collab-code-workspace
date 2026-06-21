@@ -204,3 +204,25 @@ export async function getInviteInfoController(req, res) {
     });
   }
 }
+
+export async function getMyRoleController(req, res) {
+
+  const { roomId } = req.params;
+  const room = await prisma.room.findUnique({
+    where: { roomId },
+  });
+
+  const member =
+    await prisma.workspaceMember.findUnique({
+      where: {
+        userId_workspaceId: {
+          userId: req.user.userId,
+          workspaceId: room.id,
+        }
+      }
+    });
+
+  res.json({
+    role: member.role,
+  });
+}

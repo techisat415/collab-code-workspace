@@ -4,7 +4,6 @@ import Register from "./pages/Register.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import InvitePage from "./pages/InvitePage";
-
 import Home from "./pages/Home.jsx";
 import EditorPage from "./pages/EditorPage.jsx";
 
