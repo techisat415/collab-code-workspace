@@ -61,6 +61,7 @@ export default function Dashboard() {
         >
           <div>
             <strong>{workspace.name}</strong><br />
+            <span>({workspace.role})</span>
             <small>{workspace.roomId}</small>
             </div>
         </div>

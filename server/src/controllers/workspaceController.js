@@ -20,19 +20,21 @@ export async function createWorkspaceController(req, res) {
 export async function getWorkspacesController(req, res) {
   try {
 
-    const rooms =
-      await prisma.room.findMany({
-        where: {
-          ownerId: req.user.userId,
-        },
-
-        select: {
-          roomId: true,
-          name: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      });
+    const memberships = await prisma.workspaceMember.findMany({
+      where: {
+        userId: req.user.userId,
+      },
+      include: {
+        workspace: true,
+      }
+    })
+    const rooms = memberships.map((member) => ({
+      roomId: member.workspace.roomId,
+      name: member.workspace.name,
+      role: member.role,
+      createdAt: member.workspace.createdAt,
+      updatedAt: member.workspace.updatedAt,
+    }));
 
     res.json(rooms);
 
