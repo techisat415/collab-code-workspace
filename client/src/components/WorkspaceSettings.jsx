@@ -1,9 +1,14 @@
-export default function WorkspaceSettings({
-  members,
-  workspaceName,
-  onClose,
-}) {
+import api from "../api/api.js";
+import { useNavigate } from "react-router-dom";
 
+export default function WorkspaceSettings({members, workspaceName, roomId, onClose,}) {
+
+    async function removeMember(userId) {
+        await api.delete(`/workspace/${roomId}/members/${userId}`);
+        window.location.reload();
+    }
+
+    console.log(members);
   return (
     <div
       style={{
@@ -69,15 +74,14 @@ export default function WorkspaceSettings({
               <span>
                 {member.role}
               </span>
+              
 
               <button>
                 Change Role
               </button>
 
               {member.role !== "OWNER" && (
-                <button>
-                  Remove
-                </button>
+                <button onClick={() => removeMember(member.userId)}>Remove</button>
               )}
             </div>
           </div>

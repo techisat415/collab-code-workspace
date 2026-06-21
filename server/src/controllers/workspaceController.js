@@ -1,5 +1,5 @@
 import prisma from "../lib/prisma.js";
-import { createWorkspace } from "../services/workspaceService.js";
+import { createWorkspace, removeWorkspace } from "../services/workspaceService.js";
 
 export async function createWorkspaceController(req, res) {
   try {
@@ -140,7 +140,7 @@ export async function getWorkspaceMembersController(req, res) {
 
     res.json(
       room.members.map(member => ({
-        id: member.user.id,
+        userId: member.user.id,
         username: member.user.username,
         name: member.user.name,
         role: member.role,
@@ -225,4 +225,122 @@ export async function getMyRoleController(req, res) {
   res.json({
     role: member.role,
   });
+}
+
+export async function updateMemberRoleController(req, res) {
+  try {
+    const { roomId, userId } = req.params;
+    const { role } = req.body;
+
+    const room = await prisma.room.findUnique({
+      where: { roomId },
+    });
+
+    if (!room) {
+      return res.status(404).json({
+        error: "Workspace not found",
+      });
+    }
+
+    if (room.ownerId !== req.user.userId) {
+      return res.status(403).json({
+        error: "Only owner can change roles",
+      });
+    }
+
+    if (room.ownerId === userId) {
+      return res.status(400).json({
+        error: "Cannot change owner role",
+      });
+    }
+
+    await prisma.workspaceMember.update({
+      where: {
+        userId_workspaceId: {
+          userId,
+          workspaceId: room.id,
+        }
+      },
+
+      data: {
+        role,
+      }
+    });
+
+    res.json({
+      message: "Role updated",
+    });
+
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({
+      error: "Failed to update role",
+    });
+  }
+}
+
+export async function removeMemberController(req, res) {
+  try {
+    const { roomId, userId } = req.params;
+    const room = await prisma.room.findUnique({
+      where: { roomId },
+    });
+
+    if (!room) {
+      return res.status(404).json({
+        error: "Workspace not found",
+      });
+    }
+
+    if (room.ownerId !== req.user.userId) {
+      return res.status(403).json({
+        error: "Only owner can remove members",
+      });
+    }
+
+    if (room.ownerId === userId) {
+      return res.status(400).json({
+        error: "Cannot remove owner",
+      });
+    }
+
+    await prisma.workspaceMember.delete({
+      where: {
+        userId_workspaceId: {
+          userId,
+          workspaceId: room.id,
+        }
+      }
+    });
+
+    res.json({
+      message: "Member removed",
+    });
+
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({
+      error: "Failed to remove member",
+    });
+  }
+}
+
+export async function deleteWorkspaceController(req, res) {
+  try {
+    const { roomId } = req.params;
+    await removeWorkspace(
+      roomId,
+      req.user.userId
+    );
+
+    res.json({
+      message: "Workspace deleted",
+    });
+
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({
+      error: err.message,
+    });
+  }
 }

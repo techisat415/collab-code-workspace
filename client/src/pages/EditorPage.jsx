@@ -525,6 +525,8 @@ function EditorPage() {
       {showSettings && (
         <WorkspaceSettings
           members={members}
+          workspaceName={workspaceName}
+          roomId={roomId}
           onClose={() => setShowSettings(false)}
         />
       )}
