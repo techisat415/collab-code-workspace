@@ -64,13 +64,16 @@ function FileTreeNode({
             }
             style={{
               padding: "6px 8px",
-              color: "#c5c5c5",
-              fontSize: 13,
+              borderRadius: 6,
+              color: "var(--text-muted, #c5c5c5)",
+              fontFamily: "var(--font-mono, monospace)",
+              fontSize: 12.5,
               fontWeight: 600,
               cursor: "pointer",
+              userSelect: "none",
             }}
           >
-            {isExpanded ? "▼" : "▶"} 📁 {label}
+            {isExpanded ? "▾" : "▸"} {label}
           </div>
           {isExpanded && (
             <FileTreeNode
@@ -100,31 +103,53 @@ function FileTreeNode({
           justifyContent: "space-between",
           gap: 8,
           cursor: "pointer",
-          background: isActive ? "#2b2d31" : "transparent",
-          color: isActive ? "#ffffff" : "#d7d7d7",
+          background: isActive ? "var(--accent-soft, #2b2d31)" : "transparent",
+          color: isActive ? "var(--accent-strong, #ffffff)" : "var(--text, #d7d7d7)",
+          fontFamily: "var(--font-mono, monospace)",
+          fontSize: 12.5,
         }}
         onClick={() => onSelect(node.path)}
       >
         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          📄 {label}
+          {label}
         </span>
-        <span style={{ display: "inline-flex", gap: 6, flexShrink: 0 }}>
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              onRename(node.path);
-            }}
-          >
-            ✏️
-          </button>
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              onDelete(node.path);
-            }}
-          >
-            ❌
-          </button>
+        <span style={{ display: "inline-flex", gap: 4, flexShrink: 0 }}>
+          {onRename && (
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                onRename(node.path);
+              }}
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 12,
+                opacity: 0.75,
+              }}
+              title="Rename"
+            >
+              👀
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete(node.path);
+              }}
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 12,
+                opacity: 0.75,
+              }}
+              title="Delete"
+            >
+              🗑️
+            </button>
+          )}
         </span>
       </div>
     );
