@@ -20,6 +20,9 @@ function EditorPage() {
   const [onlineUsers, setOnlineUsers] = useState(0);
   const [workspaceName, setWorkspaceName] = useState("");
   const [members, setMembers] = useState([]);
+  const [showFiles, setShowFiles] = useState(true);
+  const [showChat, setShowChat] = useState(false);
+  const [showTerminal, setShowTerminal] = useState(true);
   const [showMembers, setShowMembers] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [onlineMembers, setOnlineMembers] = useState([]);
@@ -400,9 +403,7 @@ function EditorPage() {
         ),
       });
     };
-
     awareness.on("update", handler);
-
     return () => {
       try {
         awareness.off("update", handler);
