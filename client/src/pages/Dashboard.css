@@ -140,48 +140,24 @@
 
 .workspace-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
 }
 
 .workspace-card {
   position: relative;
   overflow: hidden;
+  padding: 16px;
+  /* border: 0.1px solid var(--border); */
+  border-radius: var(--radius-sm);
 }
 
-.workspace-card::before {
-  content: "";
-
-  position: absolute;
-
-  top: -50%;
-  left: -50%;
-
-  width: 200%;
-  height: 200%;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(124,111,234,.08),
-      transparent 60%
-    );
-
-  opacity: 0;
-  transition: .3s;
+.workspace-card:hover {
+    cursor: pointer;
+    /* background: var(--bg-surface-hover); */
+    background: rgba(255, 255, 255, 0);
 }
 
-.workspace-card:hover::before {
-  opacity: 1;
-}
-
-.workspace-card__name {
-  font-weight: 800;
-  font-size: 22px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 .workspace-card__meta {
   display: flex;
@@ -204,6 +180,12 @@
   text-align: center;
   color: var(--text-muted);
   font-size: 13.5px;
+}
+
+.badge--owner {
+  color: var(--accent);
+  border: none;
+  background: none;
 }
 
 @media (max-width: 640px) {

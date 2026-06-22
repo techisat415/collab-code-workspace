@@ -23,6 +23,8 @@ import {
   SettingsIcon,
   LinkIcon,
   PlusIcon,
+  PencilIcon,
+  TrashIcon,
 } from "../components/icons.jsx";
 import "./EditorPage.css";
 
@@ -223,10 +225,37 @@ function EditorPage() {
     activeFileRef.current = activeFile;
   }, [activeFile]);
 
-  function handleEditorDidMount(editor) {
+  // function handleEditorDidMount(editor) {
+  //   editorRef.current = editor;
+  //   attachYjsBinding();
+  // }
+
+  function handleEditorDidMount(editor, monaco) {
     editorRef.current = editor;
     attachYjsBinding();
-  }
+  monaco.editor.defineTheme("collab-dark", {
+    base: "vs-dark",
+    inherit: true,
+
+    rules: [
+      { token: "comment", foreground: "6B7280" },
+      { token: "keyword", foreground: "8B5CF6" },
+      { token: "string", foreground: "10B981" },
+      { token: "number", foreground: "F59E0B" },
+    ],
+
+    colors: {
+      "editor.background": "#0F1117",
+      "editor.foreground": "#E5E7EB",
+      "editorLineNumber.foreground": "#4B5563",
+      "editorCursor.foreground": "#8B5CF6",
+      "editor.selectionBackground": "#312E81",
+      "editor.lineHighlightBackground": "#161B22",
+    },
+  });
+
+  monaco.editor.setTheme("collab-dark");
+}
 
   function startExplorerResize(e) {
     e.preventDefault();
@@ -547,10 +576,13 @@ function EditorPage() {
     const path = prompt("Enter file path:");
     if (!path) return;
 
-    socket.emit("create-file", {
-      roomId,
-      path
-    });
+    socket.emit("create-file", {roomId, path});
+  };
+
+  const createFolder = () => {
+    const folderName = prompt("Folder name:");
+    if (!folderName) return;
+    socket.emit("create-file", {roomId, path: `${folderName}/.gitkeep`});
   };
 
   const renameFile = (oldPath) => {
@@ -664,8 +696,12 @@ function EditorPage() {
               <button className="btn btn--primary explorer__new" onClick={createFile}>
                 <PlusIcon />
                 <span className="btn__label">New file</span>
-              </button>
-            )}
+              </button>)}
+              {role !== "VIEWER" && (
+              <button className="btn btn--primary explorer__new" onClick={createFolder}>
+                <PlusIcon />
+                <span className="btn__label">New folder</span>
+              </button>)}
 
             <div className="explorer__tree">
               {fileCount === 0 ? (
@@ -719,7 +755,7 @@ function EditorPage() {
                 height="100%"
                 language={files[activeFile]?.language || "plaintext"}
                 defaultValue=""
-                theme="vs-dark"
+                theme="vs"
                 options={{
                   readOnly: role === "VIEWER",
                 }}

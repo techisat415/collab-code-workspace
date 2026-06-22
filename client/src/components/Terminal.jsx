@@ -21,6 +21,38 @@ export default function SharedTerminal({ roomId }) {
     const term = new Terminal({
       cursorBlink: true,
       convertEol: true,
+
+      fontFamily: "'Menlo', 'SF Mono', 'JetBrains Mono', monospace",
+      fontSize: 13,
+      lineHeight: 1.2,
+      letterSpacing: 0,
+      fontWeight: "400",
+      theme: {
+        // background: "#1e1e1e",
+        background: "#1f2023",
+        foreground: "#d4d4d4",
+        cursor: "#aeafad",
+        cursorAccent: "#1e1e1e",
+        selectionBackground: "#264f78",
+
+        black: "#000000",
+        red: "#cd3131",
+        green: "#0dbc79",
+        yellow: "#e5e510",
+        blue: "#2472c8",
+        magenta: "#bc3fbc",
+        cyan: "#11a8cd",
+        white: "#e5e5e5",
+
+        brightBlack: "#666666",
+        brightRed: "#f14c4c",
+        brightGreen: "#23d18b",
+        brightYellow: "#f5f543",
+        brightBlue: "#3b8eea",
+        brightMagenta: "#d670d6",
+        brightCyan: "#29b8db",
+        brightWhite: "#ffffff",
+      },
     });
 
     const fitAddon = new FitAddon();
@@ -29,7 +61,7 @@ export default function SharedTerminal({ roomId }) {
 
     if (terminalRef.current) {
       console.log("terminal size:", terminalRef.current?.clientWidth, terminalRef.current?.clientHeight);
-      
+
       term.open(terminalRef.current);
       const resizeObserver = new ResizeObserver(() => {
         fitAddon.fit();
@@ -48,7 +80,7 @@ export default function SharedTerminal({ roomId }) {
 
 
     let buffer = "";
-    
+
     term.onData((data) => {
       if (data === "\r") {
         const command = buffer;
@@ -56,7 +88,7 @@ export default function SharedTerminal({ roomId }) {
           roomId,
           command,
         });
-        
+
         term.write("\r\n");
         buffer = "";
         return;
@@ -78,7 +110,7 @@ export default function SharedTerminal({ roomId }) {
       term.write("\r\n~/ $ ");
       term.scrollToBottom();
     };
-    
+
     socket.on("terminal-output", handleOutput);
 
 

@@ -13,7 +13,6 @@ export default function Dashboard() {
 
   const navigate = useNavigate();
   const { user } = useAuth();
-
   async function loadWorkspaces() {
     setLoading(true);
     setError("");

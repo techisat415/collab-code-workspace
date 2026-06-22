@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PencilIcon, TrashIcon } from "./icons.jsx";
 
 function buildTree(files) {
   const tree = {};
@@ -129,7 +130,7 @@ function FileTreeNode({
               }}
               title="Rename"
             >
-              ✏️
+              <PencilIcon width={19} height={19} />
             </button>
           )}
           {onDelete && (
@@ -147,7 +148,7 @@ function FileTreeNode({
               }}
               title="Delete"
             >
-              🗑️
+              <TrashIcon width={19} height={19} />
             </button>
           )}
         </span>
