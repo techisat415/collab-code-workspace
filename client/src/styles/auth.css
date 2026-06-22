@@ -33,7 +33,7 @@
 .auth-page {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1fr 480px;
+  grid-template-columns: 1fr 710px;
   background: var(--bg-app);
 }
 
@@ -58,14 +58,25 @@
   background: radial-gradient(circle at center, rgba(255,255,255,0.04), transparent 70%);
 }
 
+.auth-right {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .auth-card {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: rgba(53, 85, 159, 0.7);
-  backdrop-filter: blur(20px);
-  border-left: .01px solid var(--border);
-  padding: 48px;
+  /* align-items: center; */
+  background: transparent;
+  width: 420px;
+  /* max-width: 100%; */
+  /* background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(20px); */
+  box-shadow: none;
+  border: none;
+  /* padding: 48px; */
 }
 /* .auth-card {
   width: 100%;
@@ -111,29 +122,33 @@
 }
 
 .auth-label {
-  color: var(--text-muted);
+  
+  /* color: var(--text-muted); */
   font-size: 0.9rem;
 }
 
 .auth-input {
   width: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  border: .5px solid var(--border);
+  /* background: rgba(0, 0, 0, 0.7); */
+  background: rgba(255, 255, 255, 0.03);
+  border: .1px solid var(--border);
+  /* border: none; */
   color: var(--text);
-  padding: 12px;
-  border-radius: 18px;
+  padding: 9px;
+  border-radius: 9px;
   font-size: 0.95rem;
 }
 
 .auth-input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: #aa7f4f;
+  box-shadow: 0 0 0 3px rgba(170, 127, 79, 0.16);
 }
 
 .auth-submit {
   margin-top: 8px;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(255, 255, 255, 0.1);
+  /* background: rgba(0, 0, 0, 0.7); */
   color: white;
   border: none;
   padding: 12px;
@@ -144,7 +159,7 @@
 }
 
 .auth-submit:hover {
-  background: var(--accent-hover);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .auth-footer {
@@ -154,7 +169,7 @@
 }
 
 .auth-link {
-  color: rgba(73, 73, 91, 0.7);
+  color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
   font-weight: 600;
 }

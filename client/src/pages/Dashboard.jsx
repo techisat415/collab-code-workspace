@@ -1,87 +1,168 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/api";
+import "./Dashboard.css";
 
 export default function Dashboard() {
+
   const [workspaces, setWorkspaces] = useState([]);
   const [joinId, setJoinId] = useState("");
 
   const navigate = useNavigate();
 
-  async function loadWorkspaces() {
-    const res = await api.get("/workspace");
-    setWorkspaces(res.data);
-  }
-
   useEffect(() => {
     loadWorkspaces();
   }, []);
 
+  async function loadWorkspaces() {
+    try {
+      const res = await api.get("/workspace");
+      setWorkspaces(res.data);
+    }
+    catch (err) {
+      console.error(err);
+    }
+  }
+
   async function createWorkspace() {
-    const name = prompt("Enter workspace name:");
-    if(!name) return;
+    const name = prompt("Workspace name");
+
+    if (!name) return;
 
     const res = await api.post("/workspace", { name });
+
     navigate(`/workspace/${res.data.roomId}`);
   }
 
   async function joinWorkspace() {
-    if(!joinId.trim()) return;
-    await api.post(`/workspace/${joinId}/join`);
+
+    if (!joinId.trim()) return;
+
+    await api.post(
+      `/workspace/${joinId}/join`
+    );
 
     navigate(`/workspace/${joinId}`);
   }
 
+  const ownedWorkspaces = workspaces.filter(
+    ws => ws.role === "OWNER"
+  );
+
+  const sharedWorkspaces = workspaces.filter(
+    ws => ws.role !== "OWNER"
+  );
+
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1>Dashboard</h1>
+    <div className="dashboard">
 
-      <button onClick={createWorkspace}>
-        + Create Workspace
-      </button>
+      <div className="dashboard__hero">
 
-      <hr />
+        <div>
+          <h1 className="dashboard__title">
+            Welcome back 👋
+          </h1>
 
-      <h2>My Workspaces</h2>
-
-      {workspaces.map((workspace) => (
-        <div
-          key={workspace.roomId}
-          style={{
-            padding: "1rem",
-            border: "1px solid gray",
-            marginTop: "1rem",
-            cursor: "pointer",
-          }}
-          onClick={() =>
-            navigate(
-              `/workspace/${workspace.roomId}`
-            )
-        }
-        >
-          <div>
-            <strong>{workspace.name}</strong><br />
-            <span>({workspace.role})</span>
-            <small>{workspace.roomId}</small>
-            </div>
+          <p className="dashboard__subtitle">
+            Manage your collaborative workspaces.
+          </p>
         </div>
-      ))}
 
-      <hr />
+        <div className="dashboard__actions">
 
-      <h2>Join Workspace</h2>
+          <button
+            className="dashboard-btn dashboard-btn--primary"
+            onClick={createWorkspace}
+          >
+            + Create Workspace
+          </button>
 
-      <input
-        value={joinId}
-        onChange={(e) =>
-          setJoinId(e.target.value)
-        }
-        placeholder="Workspace ID"
-      />
+          <div className="join-box">
+            <input
+              value={joinId}
+              placeholder="Workspace ID"
+              onChange={(e) =>
+                setJoinId(e.target.value)
+              }
+            />
 
-      <button onClick={joinWorkspace}>
-        Join
-      </button>
+            <button
+              className="dashboard-btn"
+              onClick={joinWorkspace}
+            >
+              Join
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <section className="workspace-section">
+
+        <h2>Owned Workspaces</h2>
+
+        <div className="workspace-grid">
+          {ownedWorkspaces.map(workspace => (
+            <WorkspaceCard
+              key={workspace.roomId}
+              workspace={workspace}
+              navigate={navigate}
+            />
+          ))}
+        </div>
+
+      </section>
+
+      <section className="workspace-section">
+
+        <h2>Shared With Me</h2>
+
+        <div className="workspace-grid">
+          {sharedWorkspaces.map(workspace => (
+            <WorkspaceCard
+              key={workspace.roomId}
+              workspace={workspace}
+              navigate={navigate}
+            />
+          ))}
+        </div>
+
+      </section>
+
+    </div>
+  );
+}
+
+function WorkspaceCard({
+  workspace,
+  navigate,
+}) {
+
+  return (
+    <div
+      className="workspace-card"
+      onClick={() =>
+        navigate(`/workspace/${workspace.roomId}`)
+      }
+    >
+
+      <h3>{workspace.name}</h3>
+
+      <span
+        className={`role-pill ${
+          workspace.role === "OWNER"
+            ? "owner"
+            : "editor"
+        }`}
+      >
+        {workspace.role}
+      </span>
+
+      <p className="workspace-id">
+        {workspace.roomId}
+      </p>
+
     </div>
   );
 }

@@ -10,9 +10,13 @@
   --text-muted: #8d8e9c;
   --text-faint: #5d5e6b;
 
-  --accent: #7c6fea;
+  /* --accent: #7c6fea;
   --accent-soft: rgba(124, 111, 234, 0.16);
-  --accent-strong: #9587ff;
+  --accent-strong: #9587ff; */
+
+  --accent: #aa7f4f;
+  --accent-soft: rgba(170, 127, 79, 0.16);
+  --accent-strong: #806348;
 
   --run: #2bbf94;
   --run-strong: #3ed6a8;

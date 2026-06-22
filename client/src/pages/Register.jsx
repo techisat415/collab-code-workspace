@@ -42,6 +42,7 @@ export default function Register() {
         </div>
 
       </div>
+      <div className="auth-right">
       <div className="auth-card">
 
         <h1 className="auth-title">
@@ -64,6 +65,7 @@ export default function Register() {
 
             <input
               className="auth-input"
+              placeholder="Saksham Panghal"
               value={form.name}
               onChange={(e) =>
                 setForm({
@@ -81,6 +83,7 @@ export default function Register() {
 
             <input
               className="auth-input"
+              placeholder="saksham.panghal"
               value={form.username}
               onChange={(e) =>
                 setForm({
@@ -98,6 +101,7 @@ export default function Register() {
 
             <input
               className="auth-input"
+              placeholder="saksham.panghal@example.com"
               type="email"
               value={form.email}
               onChange={(e) =>
@@ -116,6 +120,7 @@ export default function Register() {
 
             <input
               className="auth-input"
+              placeholder="Minimum 8 characters"
               type="password"
               value={form.password}
               onChange={(e) =>
@@ -146,6 +151,7 @@ export default function Register() {
           </Link>
         </div>
 
+      </div>
       </div>
     </div>
   );
