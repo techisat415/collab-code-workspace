@@ -1,168 +1,149 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import api from "../api/api";
 import "./Dashboard.css";
 
 export default function Dashboard() {
-
   const [workspaces, setWorkspaces] = useState([]);
   const [joinId, setJoinId] = useState("");
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    loadWorkspaces();
-  }, []);
+  const { user } = useAuth();
 
   async function loadWorkspaces() {
     try {
       const res = await api.get("/workspace");
       setWorkspaces(res.data);
-    }
-    catch (err) {
+    } catch (err) {
       console.error(err);
     }
   }
+
+  useEffect(() => {
+    loadWorkspaces();
+  }, []);
 
   async function createWorkspace() {
     const name = prompt("Workspace name");
 
     if (!name) return;
 
-    const res = await api.post("/workspace", { name });
+    try {
+      const res = await api.post("/workspace", {
+        name,
+      });
 
-    navigate(`/workspace/${res.data.roomId}`);
+      navigate(`/workspace/${res.data.roomId}`);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function joinWorkspace() {
-
     if (!joinId.trim()) return;
 
-    await api.post(
-      `/workspace/${joinId}/join`
-    );
+    try {
+      await api.post(`/workspace/${joinId}/join`);
 
-    navigate(`/workspace/${joinId}`);
+      navigate(`/workspace/${joinId}`);
+    } catch (err) {
+      console.error(err);
+      alert("Unable to join workspace");
+    }
   }
-
-  const ownedWorkspaces = workspaces.filter(
-    ws => ws.role === "OWNER"
-  );
-
-  const sharedWorkspaces = workspaces.filter(
-    ws => ws.role !== "OWNER"
-  );
 
   return (
     <div className="dashboard">
+      {/* Header */}
+      <header className="dashboard-header">
+        <div className="dashboard-brand">
+          <div className="dashboard-brand__icon">
+            {"</>"}
+          </div>
 
-      <div className="dashboard__hero">
-
-        <div>
-          <h1 className="dashboard__title">
-            Welcome back 👋
-          </h1>
-
-          <p className="dashboard__subtitle">
-            Manage your collaborative workspaces.
-          </p>
+          <span>Workspaces</span>
         </div>
 
-        <div className="dashboard__actions">
+        <div className="dashboard-user">
+          {user?.name || user?.username || "User"}
+        </div>
+      </header>
 
-          <button
-            className="dashboard-btn dashboard-btn--primary"
-            onClick={createWorkspace}
-          >
-            + Create Workspace
-          </button>
+      {/* Content */}
+      <main className="dashboard-content">
+        <div className="dashboard-top">
+          <div>
+            <h1>Your workspaces</h1>
 
-          <div className="join-box">
+            <p>
+              Jump back into a room, or start a new one.
+            </p>
+          </div>
+
+          <div className="dashboard-actions">
             <input
               value={joinId}
-              placeholder="Workspace ID"
               onChange={(e) =>
                 setJoinId(e.target.value)
               }
+              placeholder="Workspace ID"
             />
 
             <button
-              className="dashboard-btn"
+              className="dashboard-btn dashboard-btn--secondary"
               onClick={joinWorkspace}
             >
               Join
             </button>
+
+            <button
+              className="dashboard-btn dashboard-btn--primary"
+              onClick={createWorkspace}
+            >
+              + New Workspace
+            </button>
           </div>
-
         </div>
 
-      </div>
+        {workspaces.length === 0 ? (
+          <div className="dashboard-empty">
+            No workspaces yet.
+          </div>
+        ) : (
+          <div className="workspace-grid">
+            {workspaces.map((workspace) => (
+              <div
+                key={workspace.roomId}
+                className="workspace-card"
+                onClick={() =>
+                  navigate(
+                    `/workspace/${workspace.roomId}`
+                  )
+                }
+              >
+                <h3>{workspace.name}</h3>
 
-      <section className="workspace-section">
+                <div className="workspace-meta">
+                  <span
+                    className={`workspace-role ${
+                      workspace.role === "OWNER"
+                        ? "owner"
+                        : "editor"
+                    }`}
+                  >
+                    {workspace.role}
+                  </span>
+                </div>
 
-        <h2>Owned Workspaces</h2>
-
-        <div className="workspace-grid">
-          {ownedWorkspaces.map(workspace => (
-            <WorkspaceCard
-              key={workspace.roomId}
-              workspace={workspace}
-              navigate={navigate}
-            />
-          ))}
-        </div>
-
-      </section>
-
-      <section className="workspace-section">
-
-        <h2>Shared With Me</h2>
-
-        <div className="workspace-grid">
-          {sharedWorkspaces.map(workspace => (
-            <WorkspaceCard
-              key={workspace.roomId}
-              workspace={workspace}
-              navigate={navigate}
-            />
-          ))}
-        </div>
-
-      </section>
-
-    </div>
-  );
-}
-
-function WorkspaceCard({
-  workspace,
-  navigate,
-}) {
-
-  return (
-    <div
-      className="workspace-card"
-      onClick={() =>
-        navigate(`/workspace/${workspace.roomId}`)
-      }
-    >
-
-      <h3>{workspace.name}</h3>
-
-      <span
-        className={`role-pill ${
-          workspace.role === "OWNER"
-            ? "owner"
-            : "editor"
-        }`}
-      >
-        {workspace.role}
-      </span>
-
-      <p className="workspace-id">
-        {workspace.roomId}
-      </p>
-
+                <p className="workspace-id">
+                  {workspace.roomId}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
