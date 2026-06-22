@@ -1,3 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+/* ----------------------------------------------------------------------
+   Tokens
+   A dark "instrument panel" palette built for a code editor: near-black
+   surfaces so syntax colour and collaborator cursors stay the loudest
+   thing on screen, one violet accent for interactive state, and a
+   separate teal reserved only for "this executes code" (Run).
+   ------------------------------------------------------------------- */
+:root {
+  --bg-app: #15161a;
+  --bg-panel: #1a1b20;
+  --bg-surface: #21222a;
+  --bg-surface-hover: #2a2b35;
+  --border: #2c2d36;
+  --border-soft: #24252d;
+
+  --text: #e7e7ec;
+  --text-muted: #8d8e9c;
+  --text-faint: #5d5e6b;
+
+  /* --accent: #7c6fea;
+  --accent-soft: rgba(124, 111, 234, 0.16);
+  --accent-strong: #9587ff; */
+
+  --accent: #706c67;
+  --accent-soft: rgba(128, 122, 115, 0.16);
+  --accent-strong: #7c7773;
+  
+  /* --run: #2bbf94; */
+  /* --run-strong: #3ed6a8; */
+  --run: green;
+  --run-strong: rgb(10, 241, 10);
+  --danger: #e35d6a;
+
+  --rail-width: 44px;
+  --explorer-width: 250px;
+  --chat-width: 290px;
+  --terminal-height: 250px;
+  --terminal-bar-height: 36px;
+  --header-height: 52px;
+  --toolbar-height: 44px;
+
+  --font-ui: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 9px;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
 .dashboard {
   min-height: 100vh;
   background: var(--bg-app);
