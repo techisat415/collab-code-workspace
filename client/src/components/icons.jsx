@@ -88,3 +88,56 @@ export const SendIcon = (p) => (
     <path d="M3.5 12 20.5 4l-5 16-4-6-7-2Z" />
   </svg>
 );
+
+export const PencilIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
+    <path d="M14.5 7.5 17 5" />
+  </svg>
+);
+
+export const TrashIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M5 7h14" />
+    <path d="M9 7V4.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V7" />
+    <path d="M7 7l1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
+  </svg>
+);
+
+export const MailIcon = (p) => (
+  <svg {...base} {...p}>
+    <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+    <path d="M4.5 7 12 13l7.5-6" />
+  </svg>
+);
+
+export const LockIcon = (p) => (
+  <svg {...base} {...p}>
+    <rect x="5" y="11" width="14" height="9" rx="2" />
+    <path d="M8 11V7.5a4 4 0 0 1 8 0V11" />
+  </svg>
+);
+
+export const UserIcon = (p) => (
+  <svg {...base} {...p}>
+    <circle cx="12" cy="8" r="3.5" />
+    <path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" />
+  </svg>
+);
+
+export const ArrowRightIcon = (p) => (
+  <svg {...base} {...p}>
+    <line x1="4" y1="12" x2="19" y2="12" />
+    <polyline points="13 6 19 12 13 18" />
+  </svg>
+);
+
+export const LogoMarkIcon = (p) => (
+  <svg {...base} {...p}>
+    <polyline points="9 6 4 12 9 18" />
+    <polyline points="15 6 20 12 15 18" />
+  </svg>
+);
+
