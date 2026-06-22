@@ -1,25 +1,31 @@
 import api from "../api/api.js";
 import { useNavigate } from "react-router-dom";
+import "./WorkspaceSettings.css";
+import { SettingsIcon, TrashIcon } from "./icons.jsx";
 
 export default function WorkspaceSettings({ members, workspaceName, roomId, onClose, }) {
     const navigate = useNavigate();
-    async function deleteWorkspace() {
 
-    const confirmed = window.confirm("Delete this workspace permanently?");
-    if (!confirmed) return;
-    try {
-        await api.delete(`/workspace/${roomId}`);
-        alert("Workspace deleted");
-        navigate("/dashboard");
-    } catch (err) {
-        console.error(err);
-        alert(err.response?.data?.error || "Failed to delete workspace");
+    async function deleteWorkspace() {
+        const confirmed = window.confirm("Delete this workspace permanently?");
+        if (!confirmed) return;
+        try {
+            await api.delete(`/workspace/${roomId}`);
+            navigate("/dashboard");
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.error || "Failed to delete workspace");
+        }
     }
-}
 
     async function removeMember(userId) {
-        await api.delete(`/workspace/${roomId}/members/${userId}`);
-        window.location.reload();
+        try {
+            await api.delete(`/workspace/${roomId}/members/${userId}`);
+            window.location.reload();
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.error || "Failed to remove member");
+        }
     }
 
     async function changeRole(userId, role) {
@@ -32,142 +38,68 @@ export default function WorkspaceSettings({ members, workspaceName, roomId, onCl
         }
     }
 
-    console.log(members);
     return (
-        <div
-            style={{
-                position: "fixed",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                background: "#1e1e1e",
-                border: "1px solid #444",
-                borderRadius: "10px",
-                padding: "20px",
-                zIndex: 1000,
-                width: "600px",
-                color: "white",
-            }}
-        >
-            <h2>⚙ Workspace Settings</h2>
+        <div className="card settings-modal">
+            <div className="settings-modal__head">
+                <div>
+                    <h2 className="settings-modal__title">
+                        <SettingsIcon width={16} height={16} style={{ marginRight: 6, verticalAlign: -2 }} />
+                        Workspace settings
+                    </h2>
+                    <p className="settings-modal__subtitle">{workspaceName}</p>
+                </div>
+            </div>
 
-            <p
-                style={{
-                    color: "#aaa",
-                    marginBottom: "20px",
-                }}
-            >
-                {workspaceName}
-            </p>
+            <p className="settings-modal__section-label">Members</p>
 
-            <h3>Members</h3>
-
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "10px",
-                }}
-            >
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {members.map((member) => (
+                    <div className="member-row" key={member.userId}>
+                        <span className="member-row__name">{member.username}</span>
 
-                    <div
-                        key={member.userId}
-                        style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            padding: "10px",
-                            border: "1px solid #333",
-                            borderRadius: "6px",
-                        }}
-                    >
-                        <div>
-                            <strong>
-                                {member.username}
-                            </strong>
-                        </div>
-
-                        <div
-                            style={{
-                                display: "flex",
-                                gap: "10px",
-                                alignItems: "center",
-                            }}
-                        >
-                            <span>
-                                {member.role}
-                            </span>
-
-
+                        <div className="member-row__actions">
                             {member.role === "OWNER" ? (
-
-                                <span>
-                                    OWNER
-                                </span>
-
+                                <span className="badge badge--owner">Owner</span>
                             ) : (
+                                <>
+                                    <select
+                                        className="select"
+                                        value={member.role}
+                                        onChange={(e) => changeRole(member.userId, e.target.value)}
+                                    >
+                                        <option value="EDITOR">EDITOR</option>
+                                        <option value="VIEWER">VIEWER</option>
+                                    </select>
 
-                                <select
-                                    value={member.role}
-                                    onChange={(e) =>
-                                        changeRole(
-                                            member.userId,
-                                            e.target.value
-                                        )
-                                    }
-                                >
-                                    <option value="EDITOR">
-                                        EDITOR
-                                    </option>
-
-                                    <option value="VIEWER">
-                                        VIEWER
-                                    </option>
-                                </select>
-
-                            )}
-
-                            {member.role !== "OWNER" && (
-                                <button onClick={() => removeMember(member.userId)}>Remove</button>
+                                    <button
+                                        className="row-icon-btn"
+                                        onClick={() => removeMember(member.userId)}
+                                        title="Remove member"
+                                    >
+                                        <TrashIcon width={14} height={14} />
+                                    </button>
+                                </>
                             )}
                         </div>
                     </div>
-
                 ))}
             </div>
 
-            <hr
-                style={{
-                    margin: "20px 0",
-                }}
-            />
+            <hr className="settings-modal__divider" />
 
-            <h3>Danger Zone</h3>
+            <p className="settings-modal__section-label">Danger zone</p>
 
-            <button
-                onClick={deleteWorkspace}
-                style={{
-                    background: "#8b0000",
-                    color: "white",
-                    padding: "10px",
-                    border: "none",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                }}
-            >
-                Delete Workspace
-            </button>
-
-            <div
-                style={{
-                    marginTop: "20px",
-                    textAlign: "right",
-                }}
-            >
-                <button onClick={onClose}>
-                    Close
+            <div className="settings-modal__danger-row">
+                <p className="settings-modal__danger-copy">
+                    Deleting a workspace removes it and all of its files for every member. This can't be undone.
+                </p>
+                <button className="btn btn--danger" onClick={deleteWorkspace}>
+                    Delete workspace
                 </button>
+            </div>
+
+            <div className="settings-modal__footer">
+                <button className="btn" onClick={onClose}>Close</button>
             </div>
         </div>
     );

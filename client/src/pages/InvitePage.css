@@ -1,0 +1,64 @@
+.invite-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(560px circle at 50% -10%, rgba(124, 111, 234, 0.16), transparent 65%),
+    var(--bg-app);
+}
+
+.invite-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 32px 30px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  text-align: center;
+}
+
+.invite-card__mark {
+  align-self: center;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.invite-card__eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.invite-card__title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 2px 0 0;
+}
+
+.invite-card__owner {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.invite-card__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  color: var(--text-muted);
+  font-size: 13.5px;
+}

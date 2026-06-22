@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PencilIcon, TrashIcon } from "./icons.jsx";
 
 function buildTree(files) {
   const tree = {};
@@ -64,13 +65,16 @@ function FileTreeNode({
             }
             style={{
               padding: "6px 8px",
-              color: "#c5c5c5",
-              fontSize: 13,
+              borderRadius: 6,
+              color: "var(--text-muted, #c5c5c5)",
+              fontFamily: "var(--font-mono, monospace)",
+              fontSize: 12.5,
               fontWeight: 600,
               cursor: "pointer",
+              userSelect: "none",
             }}
           >
-            {isExpanded ? "▼" : "▶"} 📁 {label}
+            {isExpanded ? "▾" : "▸"} {label}
           </div>
           {isExpanded && (
             <FileTreeNode
@@ -100,31 +104,41 @@ function FileTreeNode({
           justifyContent: "space-between",
           gap: 8,
           cursor: "pointer",
-          background: isActive ? "#2b2d31" : "transparent",
-          color: isActive ? "#ffffff" : "#d7d7d7",
+          background: isActive ? "var(--accent-soft, #2b2d31)" : "transparent",
+          color: isActive ? "var(--accent-strong, #ffffff)" : "var(--text, #d7d7d7)",
+          fontFamily: "var(--font-mono, monospace)",
+          fontSize: 12.5,
         }}
         onClick={() => onSelect(node.path)}
       >
         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          📄 {label}
+          {label}
         </span>
-        <span style={{ display: "inline-flex", gap: 6, flexShrink: 0 }}>
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              onRename(node.path);
-            }}
-          >
-            ✏️
-          </button>
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              onDelete(node.path);
-            }}
-          >
-            ❌
-          </button>
+        <span style={{ display: "inline-flex", gap: 4, flexShrink: 0 }}>
+          {onRename && (
+            <button
+              className="row-icon-btn"
+              onClick={(event) => {
+                event.stopPropagation();
+                onRename(node.path);
+              }}
+              title="Rename"
+            >
+              <PencilIcon width={13} height={13} />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              className="row-icon-btn"
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete(node.path);
+              }}
+              title="Delete"
+            >
+              <TrashIcon width={13} height={13} />
+            </button>
+          )}
         </span>
       </div>
     );

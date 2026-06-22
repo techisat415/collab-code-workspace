@@ -11,6 +11,44 @@ import FileTree from "../components/FileTree.jsx";
 import api from "../api/api.js";
 import ChatBox from "../components/ChatBox.jsx";
 import WorkspaceSettings from "../components/WorkspaceSettings.jsx";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  FilesIcon,
+  ChatIcon,
+  TerminalIcon,
+  PlayIcon,
+  SettingsIcon,
+  LinkIcon,
+  PlusIcon,
+} from "../components/icons.jsx";
+import "./EditorPage.css";
+
+// Collapse state for the explorer/chat/terminal drawers is small and
+// purely cosmetic, but persisting it makes the IDE feel "sticky" across
+// reloads instead of resetting to the same defaults every time.
+function usePersistedToggle(key, initial) {
+  const [value, setValue] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem(key);
+      return stored === null ? initial : stored === "1";
+    } catch {
+      return initial;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(key, value ? "1" : "0");
+    } catch {
+      // localStorage can be unavailable (privacy mode, etc) — not worth surfacing
+    }
+  }, [key, value]);
+
+  return [value, setValue];
+}
 
 function EditorPage() {
 
@@ -20,12 +58,15 @@ function EditorPage() {
   const [onlineUsers, setOnlineUsers] = useState(0);
   const [workspaceName, setWorkspaceName] = useState("");
   const [members, setMembers] = useState([]);
-  const [showFiles, setShowFiles] = useState(true);
-  const [showChat, setShowChat] = useState(false);
-  const [showTerminal, setShowTerminal] = useState(true);
   const [showMembers, setShowMembers] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [onlineMembers, setOnlineMembers] = useState([]);
+
+  const [explorerOpen, setExplorerOpen] = usePersistedToggle("ide:explorerOpen", true);
+  const [chatOpen, setChatOpen] = usePersistedToggle("ide:chatOpen", false);
+  const [terminalOpen, setTerminalOpen] = usePersistedToggle("ide:terminalOpen", true);
+  const [hasUnreadChat, setHasUnreadChat] = useState(false);
+  const presenceRef = useRef(null);
 
   const editorRef = useRef(null);
   const ydocRef = useRef(null);
@@ -403,7 +444,9 @@ function EditorPage() {
         ),
       });
     };
+
     awareness.on("update", handler);
+
     return () => {
       try {
         awareness.off("update", handler);
@@ -414,6 +457,30 @@ function EditorPage() {
     };
 
   }, []);
+
+  useEffect(() => {
+    if (!showMembers) return;
+
+    const handleClickOutside = (event) => {
+      if (presenceRef.current && !presenceRef.current.contains(event.target)) {
+        setShowMembers(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMembers]);
+
+  useEffect(() => {
+    if (chatOpen) {
+      setHasUnreadChat(false);
+      return;
+    }
+
+    const handleIncoming = () => setHasUnreadChat(true);
+    socket.on("receive-chat-message", handleIncoming);
+    return () => socket.off("receive-chat-message", handleIncoming);
+  }, [chatOpen]);
 
   const createFile = () => {
     const path = prompt("Enter file path:");
@@ -447,89 +514,212 @@ function EditorPage() {
       });
   };
 
+  const fileCount = Object.keys(files).length;
+
   return (
-    <div style={{
-      display: "flex",
-      height: "100vh",
-    }}>
-      <div style={{
-        width: "250px",
-        borderRight: "1px solid #333",
-        padding: "10px",
-      }}>
-        {role !== "VIEWER" && (<button onClick={createFile}> + New File</button>)}
+    <div className="ide-shell">
+      {/* ---------------------------------------------------------- header --- */}
+      <header className="ide-header">
+        <div className="ide-header__title">
+          <span className="ide-header__eyebrow">Workspace</span>
+          <span className="ide-header__name">{workspaceName || roomId}</span>
+        </div>
 
-        <hr />
-        <FileTree
-          files={files}
-          activePath={activeFile}
-          onSelect={setActiveFile}
-          onRename={role !== "VIEWER" ? renameFile : undefined}
-          onDelete={role !== "VIEWER" ? deleteFile : undefined}
-        />
-        <ChatBox roomId={roomId} />
+        <div className="ide-header__actions">
+          {role && (
+            <span className={`role-badge ${role === "OWNER" ? "role-badge--owner" : ""}`}>
+              {role}
+            </span>
+          )}
+
+          <div className="presence" ref={presenceRef}>
+            <button
+              className="presence__trigger"
+              onClick={() => setShowMembers((v) => !v)}
+              aria-expanded={showMembers}
+            >
+              <span className="presence__dot" />
+              <span className="presence__label">{onlineUsers} online</span>
+              <ChevronDownIcon style={{ opacity: 0.7 }} />
+            </button>
+
+            {showMembers && (
+              <div className="presence__popover">
+                {onlineMembers.length === 0 && (
+                  <div className="presence__row" style={{ color: "var(--text-faint)" }}>
+                    Nobody else is here yet
+                  </div>
+                )}
+                {onlineMembers.map((user) => (
+                  <div className="presence__row" key={user.userId}>
+                    <span>{user.username}</span>
+                    {user.role === "OWNER" && (
+                      <span className="presence__row-owner">OWNER</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {role !== "VIEWER" && (
+            <button
+              className="btn"
+              onClick={() => {
+                const link = `${window.location.origin}/invite/${roomId}`;
+                navigator.clipboard.writeText(link);
+                alert("Invite link copied!");
+              }}
+            >
+              <LinkIcon />
+              <span className="btn__label">Invite</span>
+            </button>
+          )}
+
+          {role === "OWNER" && (
+            <button className="icon-btn" onClick={() => setShowSettings(true)} aria-label="Workspace settings">
+              <SettingsIcon />
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* ------------------------------------------------------------ body --- */}
+      <div className="ide-body">
+        {/* ----------------------------------------------------- explorer --- */}
+        <aside className={`panel panel--left ${explorerOpen ? "" : "is-collapsed"}`}>
+          <div className="panel__head">
+            <span className="panel__head-label">Explorer</span>
+            <button className="icon-btn" onClick={() => setExplorerOpen(false)} aria-label="Collapse explorer">
+              <ChevronLeftIcon />
+            </button>
+          </div>
+
+          <div className="panel__body">
+            {role !== "VIEWER" && (
+              <button className="btn btn--primary explorer__new" onClick={createFile}>
+                <PlusIcon />
+                <span className="btn__label">New file</span>
+              </button>
+            )}
+
+            <div className="explorer__tree">
+              {fileCount === 0 ? (
+                <p className="explorer__empty">No files yet.{role !== "VIEWER" && " Create one to get started."}</p>
+              ) : (
+                <FileTree
+                  files={files}
+                  activePath={activeFile}
+                  onSelect={setActiveFile}
+                  onRename={role !== "VIEWER" ? renameFile : undefined}
+                  onDelete={role !== "VIEWER" ? deleteFile : undefined}
+                />
+              )}
+            </div>
+          </div>
+
+          <button className="panel__rail" onClick={() => setExplorerOpen(true)} aria-label="Expand explorer">
+            <FilesIcon />
+            <span className="panel__rail-label">Explorer</span>
+          </button>
+        </aside>
+
+        {/* --------------------------------------------- editor + terminal --- */}
+        <main className="ide-main">
+          <div className="toolbar">
+            <div className="breadcrumb">
+              {activeFile ? (
+                <>
+                  <span className="breadcrumb__file">{activeFile}</span>
+                  <span className="breadcrumb__lang">{files[activeFile]?.language || "plaintext"}</span>
+                </>
+              ) : (
+                <span style={{ color: "var(--text-faint)" }}>No file open</span>
+              )}
+            </div>
+
+            {role !== "VIEWER" && (
+              <button className="btn btn--run" onClick={runCurrentFile} disabled={!activeFile}>
+                <PlayIcon />
+                <span className="btn__label">Run</span>
+              </button>
+            )}
+          </div>
+
+          <div className="editor-pane">
+            {activeFile ? (
+              <Editor
+                key={activeFile}
+                height="100%"
+                language={files[activeFile]?.language || "plaintext"}
+                defaultValue=""
+                theme="vs-dark"
+                options={{
+                  readOnly: role === "VIEWER",
+                }}
+                onMount={handleEditorDidMount}
+              // onChange={handleCodeChange}
+              />
+            ) : (
+              <div className="editor-pane--empty">
+                Select or create a file to start editing.
+              </div>
+            )}
+          </div>
+
+          <div className={`terminal-drawer ${terminalOpen ? "is-open" : ""}`}>
+            <button
+              className="terminal-drawer__bar"
+              onClick={() => setTerminalOpen((v) => !v)}
+              aria-expanded={terminalOpen}
+            >
+              <span className="terminal-drawer__bar-left">
+                <TerminalIcon />
+                Terminal
+              </span>
+              {terminalOpen ? <ChevronDownIcon /> : <ChevronUpIcon />}
+            </button>
+
+            <div className="terminal-drawer__body">
+              <SharedTerminal roomId={roomId} />
+            </div>
+          </div>
+        </main>
+
+        {/* ----------------------------------------------------------- chat --- */}
+        <aside className={`panel panel--right ${chatOpen ? "" : "is-collapsed"}`}>
+          <div className="panel__head">
+            <span className="panel__head-label">Chat</span>
+            <button className="icon-btn" onClick={() => setChatOpen(false)} aria-label="Collapse chat">
+              <ChevronRightIcon />
+            </button>
+          </div>
+
+          <div className="panel__body">
+            <ChatBox roomId={roomId} />
+          </div>
+
+          <button className="panel__rail" onClick={() => setChatOpen(true)} aria-label="Expand chat">
+            <span className="panel__rail-badge">
+              <ChatIcon />
+              {hasUnreadChat && <span className="panel__rail-dot" />}
+            </span>
+            <span className="panel__rail-label">Chat</span>
+          </button>
+        </aside>
       </div>
 
-      <div style={{
-        flex: 1,
-        padding: "20px",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}>
-
-        <h2>Workspace: {workspaceName || roomId}</h2>
-        {role === "OWNER" && (<button onClick={() => setShowSettings(true)}>⚙ Settings</button>)}
-        <div style={{
-          cursor: "pointer",
-          marginBottom: "10px",
-        }}
-          onClick={() => setShowMembers(!showMembers)}
-        >
-          Users online: {onlineUsers} {showMembers ? " ▲" : " ▼"}
-          {role !== "VIEWER" && (<button
-            onClick={() => {
-              const link = `${window.location.origin}/invite/${roomId}`;
-              navigator.clipboard.writeText(link);
-              alert("Invite link copied!");
-            }}>Invite</button>)}
-        </div>
-        {showMembers && (<div style={{
-          border: "1px solid #444",
-          padding: "10px",
-          marginBottom: "10px",
-        }}
-        >
-          {onlineMembers.map(user => (<div key={user.userId}>
-            {user.username}
-            {user.role === "OWNER" ? " (Owner)" : ""}</div>))}
-        </div>
-        )}
-
-        <Editor
-          key={activeFile}
-          height="80vh"
-          language={files[activeFile]?.language || "plaintext"}
-          defaultValue=""
-          theme="vs-dark"
-          options={{
-            readOnly: role === "VIEWER",
-          }}
-
-          onMount={handleEditorDidMount}
-        // onChange={handleCodeChange}
-        />
-        {role !== "VIEWER" && (<button onClick={runCurrentFile}> ▶ Run </button>)}
-        <SharedTerminal roomId={roomId} />
-
-      </div>
       {showSettings && (
-        <WorkspaceSettings
-          members={members}
-          workspaceName={workspaceName}
-          roomId={roomId}
-          onClose={() => setShowSettings(false)}
-        />
+        <div className="modal-backdrop" onClick={() => setShowSettings(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <WorkspaceSettings
+              members={members}
+              workspaceName={workspaceName}
+              roomId={roomId}
+              onClose={() => setShowSettings(false)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

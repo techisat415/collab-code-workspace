@@ -107,9 +107,9 @@ export default function SharedTerminal({ roomId }) {
     <div
       ref={terminalRef}
       style={{
-        height: "300px",
+        height: "100%",
         width: "100%",
-        border: "1px solid #333",
+        minHeight: 0,
       }}
     />
   );
