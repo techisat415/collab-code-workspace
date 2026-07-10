@@ -1,7 +1,3 @@
 .yRemoteSelection {
-  background: rgba(255, 208, 0, 0.3) !important;
-}
-
-.yRemoteSelectionHead {
-  border-left: 2px solid red;
+  background: rgb(34, 255, 0) !important;
 }
