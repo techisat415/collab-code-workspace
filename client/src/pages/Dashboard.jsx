@@ -55,6 +55,8 @@ export default function Dashboard() {
   }
 
   const displayName = user?.name || user?.username || user?.email;
+  const workspaceCount = workspaces.length;
+  const ownedCount = workspaces.filter((workspace) => workspace.role === "OWNER").length;
 
   return (
     <div className="dashboard">
@@ -67,45 +69,92 @@ export default function Dashboard() {
       </nav>
 
       <div className="dashboard-body">
+        <section className="dashboard-hero">
+          <div className="dashboard-hero__copy">
+            <span className="dashboard-kicker">Collaborative coding hub</span>
+            <h1>Pick up where you left off.</h1>
+            <p>
+              Open a workspace, share a room ID, or start fresh in a few seconds.
+            </p>
+
+            <div className="dashboard-stats">
+              <div className="dashboard-stat card">
+                <span>Total workspaces</span>
+                <strong>{workspaceCount}</strong>
+              </div>
+              <div className="dashboard-stat card">
+                <span>Owned by you</span>
+                <strong>{ownedCount}</strong>
+              </div>
+              <div className="dashboard-stat card dashboard-stat--accent">
+                <span>Fast start</span>
+                <strong>Join or create</strong>
+              </div>
+            </div>
+          </div>
+
+          <aside className="dashboard-hero__panel card">
+            <div className="dashboard-panel__header">
+              <div>
+                <p className="dashboard-panel__eyebrow">Quick actions</p>
+                <h2>Get into a room</h2>
+              </div>
+              {displayName && <span className="dashboard-panel__user">{displayName}</span>}
+            </div>
+
+            <div className="dashboard-actions">
+              <form className="dashboard-join" onSubmit={joinWorkspace}>
+                <div className="input-group">
+                  <LinkIcon />
+                  <input
+                    className="input"
+                    value={joinId}
+                    onChange={(e) => setJoinId(e.target.value)}
+                    placeholder="Workspace ID"
+                    aria-label="Workspace ID"
+                  />
+                </div>
+                <button className="btn" type="submit">Join</button>
+              </form>
+
+              <button className="btn btn--primary dashboard-create" onClick={createWorkspace}>
+                <PlusIcon width={15} height={15} />
+                New workspace
+              </button>
+            </div>
+
+            <p className="dashboard-panel__hint">
+              Share a workspace ID with teammates to jump into the same session.
+            </p>
+          </aside>
+        </section>
+
         <div className="dashboard-toolbar">
           <div>
             <h1>Your workspaces</h1>
             <p>Jump back into a room, or start a new one.</p>
           </div>
-
-          <div className="dashboard-actions">
-            <form className="dashboard-join" onSubmit={joinWorkspace}>
-              <div className="input-group">
-                <LinkIcon />
-                <input
-                  className="input"
-                  value={joinId}
-                  onChange={(e) => setJoinId(e.target.value)}
-                  placeholder="Workspace ID"
-                />
-              </div>
-              <button className="btn" type="submit">Join</button>
-            </form>
-
-            <button className="btn btn--primary" onClick={createWorkspace}>
-              <PlusIcon width={15} height={15} />
-              New workspace
-            </button>
-          </div>
         </div>
 
         {loading && (
-          <div className="loading-row">
-            <span className="spinner" />
-            Loading your workspaces…
+          <div className="card dashboard-state">
+            <div className="loading-row">
+              <span className="spinner" />
+              Loading your workspaces…
+            </div>
           </div>
         )}
 
-        {!loading && error && <p className="error-text">{error}</p>}
+        {!loading && error && (
+          <div className="card dashboard-state dashboard-state--error">
+            <p className="error-text">{error}</p>
+          </div>
+        )}
 
         {!loading && !error && workspaces.length === 0 && (
           <div className="card dashboard-empty">
-            No workspaces yet — create one to start coding with someone.
+            <h2>No workspaces yet</h2>
+            <p>Create one to start coding with someone, or join an existing room using its ID.</p>
           </div>
         )}
 
@@ -116,7 +165,16 @@ export default function Dashboard() {
                 key={workspace.roomId}
                 className="card workspace-card"
                 onClick={() => navigate(`/workspace/${workspace.roomId}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate(`/workspace/${workspace.roomId}`);
+                  }
+                }}
               >
+                <div className="workspace-card__accent" />
                 <div className="workspace-card__name">{workspace.name}</div>
                 <div className="workspace-card__meta">
                   <span className="workspace-card__id">{workspace.roomId}</span>

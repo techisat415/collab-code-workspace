@@ -110,7 +110,6 @@ function EditorPage() {
 
     const rules = [
       ".yRemoteSelection { background: rgba(255, 0, 0, 0.3) !important; }",
-      ".yRemoteSelectionHead { border-left: 2px solid red !important; }",
     ];
 
     for (const [clientId, state] of awareness.getStates()) {
@@ -283,15 +282,9 @@ function EditorPage() {
 
   function handleMouseMove(ev) {
 
-    const nextWidth =
-      startWidth -
-      (ev.clientX - startX);
+    const nextWidth = startWidth - (ev.clientX - startX);
 
-    setChatWidth(
-      Math.max(
-        220,
-        Math.min(500, nextWidth)
-      )
+    setChatWidth(Math.max(220, Math.min(500, nextWidth))
     );
   }
 
@@ -423,6 +416,7 @@ function EditorPage() {
         new Uint8Array(update),
         "remote"
       );
+      console.log(Array.from(awarenessRef.current.getStates()));
 
       buildAwarenessStyles();
     };
@@ -470,23 +464,20 @@ function EditorPage() {
       return;
     }
 
-    // if (bindingRef.current) {
-    //   bindingRef.current.destroy();
-    //   bindingRef.current = null;
-    // }
+    if (bindingRef.current) {
+      bindingRef.current.destroy();
+      bindingRef.current = null;
+    }
 
-    // if (ydocRef.current) {
-    //   ydocRef.current.destroy();
-    //   ydocRef.current = null;
-    // }
+    if (ydocRef.current) {
+      ydocRef.current.destroy();
+      // ydocRef.current = null;
+    }
 
     ydocRef.current = new Y.Doc();
     attachYjsBinding();
 
-    socket.emit("request-yjs-state", {
-      roomId,
-      path: activeFile,
-    });
+    socket.emit("request-yjs-state", {roomId, path: activeFile });
   }, [roomId, activeFile]);
 
   useEffect(() => {

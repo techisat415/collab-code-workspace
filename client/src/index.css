@@ -1,11 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
-/* ----------------------------------------------------------------------
-   Tokens — shared across the whole app (auth pages, dashboard, editor).
-   Same palette as the editor shell: near-black surfaces, one violet
-   accent for interactive state, a separate teal reserved for "this
-   runs/works" moments (join, run, success).
-   ------------------------------------------------------------------- */
 :root {
   --bg-app: #15161a;
   --bg-panel: #1a1b20;
@@ -36,9 +30,6 @@
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ----------------------------------------------------------------------
-   Reset
-   ------------------------------------------------------------------- */
 * {
   box-sizing: border-box;
 }
@@ -99,9 +90,6 @@ a:focus-visible,
   }
 }
 
-/* ----------------------------------------------------------------------
-   Buttons — shared by every page, not just the editor.
-   ------------------------------------------------------------------- */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -187,7 +175,6 @@ a:focus-visible,
   color: var(--text);
 }
 
-/* small icon-only action used in dense rows, e.g. the file tree */
 .row-icon-btn {
   display: inline-flex;
   align-items: center;
@@ -207,9 +194,6 @@ a:focus-visible,
   color: var(--text);
 }
 
-/* ----------------------------------------------------------------------
-   Form fields
-   ------------------------------------------------------------------- */
 .field {
   display: flex;
   flex-direction: column;
@@ -277,9 +261,6 @@ a:focus-visible,
   outline-offset: 1px;
 }
 
-/* ----------------------------------------------------------------------
-   Cards, badges, misc
-   ------------------------------------------------------------------- */
 .card {
   background: var(--bg-panel);
   border: 1px solid var(--border);

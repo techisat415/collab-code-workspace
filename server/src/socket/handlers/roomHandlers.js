@@ -43,6 +43,7 @@ function getOnlineUsers(io, roomId) {
 
 export default function roomHandlers(socket, io){
     socket.on("join-room", async(roomId) => {
+        socket.roomId = roomId;
 
         console.log("socket.user= ", socket.user);
 
