@@ -104,6 +104,7 @@ Create `server/.env`:
 DATABASE_URL="postgresql://<db-user>:<db-password>@localhost:5432/collab"
 JWT_SECRET="replace-with-a-long-random-secret"
 PORT=5001
+TERMINAL_MODE=restricted
 ```
 
 Do not commit real database credentials or JWT secrets. Keep local values in `.env` files and use your deployment platform's secret manager for production.
@@ -180,6 +181,8 @@ Run-file and terminal commands are routed through Docker execution helpers. The 
 ```text
 /workspace/room-<roomId>
 ```
+
+For deployment, set `TERMINAL_MODE=restricted` or run with `NODE_ENV=production`. Restricted mode disables Docker-backed shell execution and uses a safe demo terminal instead. The deployed terminal supports a small allowlist of commands such as `help`, `clear`, `pwd`, `ls`, `cd`, `cat`, `echo`, `node <file.js>`, `python <file.py>`, and `npm test`. It reads workspace files from the collaborative editor state and returns simulated/demo run output instead of executing arbitrary shell commands.
 
 Supported run-file extensions are configured in `server/src/config/runtimeRegistry.js`:
 

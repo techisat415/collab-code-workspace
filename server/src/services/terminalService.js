@@ -1,5 +1,7 @@
 import roomTerminals from "../store/roomTerminals.js";
 import { runInWorkspace } from "./dockerExecutor.js";
+import { executeRestrictedTerminalCommand } from "./restrictedExecutionService.js";
+import { isRestrictedTerminalMode } from "./terminalMode.js";
 
 function normalizePath(path) {
   const parts = [];
@@ -19,6 +21,9 @@ function normalizePath(path) {
 }
 
 export async function executeTerminalCommand( roomId, command) {
+  if (isRestrictedTerminalMode()) {
+    return executeRestrictedTerminalCommand(roomId, command);
+  }
 
   if (!roomTerminals[roomId]) {
     roomTerminals[roomId] = {

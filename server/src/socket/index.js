@@ -15,6 +15,6 @@ export default function registerSocketHandlers(io) {
     chatHandlers(socket, io);
     fileHandlers(socket, io);
     runHandlers(socket);
-    terminalHandlers(socket);
+    terminalHandlers(socket, io);
   });
 }
