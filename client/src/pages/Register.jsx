@@ -65,7 +65,7 @@ export default function Register() {
 
             <input
               className="auth-input"
-              placeholder="Saksham Panghal"
+              placeholder="Your name"
               value={form.name}
               onChange={(e) =>
                 setForm({
@@ -83,7 +83,7 @@ export default function Register() {
 
             <input
               className="auth-input"
-              placeholder="saksham.panghal"
+              placeholder="Username"
               value={form.username}
               onChange={(e) =>
                 setForm({
@@ -101,7 +101,7 @@ export default function Register() {
 
             <input
               className="auth-input"
-              placeholder="saksham.panghal@example.com"
+              placeholder="your.email@example.com"
               type="email"
               value={form.email}
               onChange={(e) =>
