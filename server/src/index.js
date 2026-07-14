@@ -17,9 +17,12 @@ import { verifyToken } from "./utils/jwt.js";
 
 const app = express();
 
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+const allowedOrigins = CLIENT_ORIGIN.split(",").map((origin) => origin.trim());
+
 app.use(cors(
   {
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
   }
 ));
@@ -34,11 +37,17 @@ app.get("/", (req, res) => {
   });
 });
 
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+  });
+});
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -69,7 +78,8 @@ registerSocketHandlers(io);
 startAutosaveService();
 
 const PORT = process.env.PORT || 5001;
+const HOST = "0.0.0.0";
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT}`);
 });
