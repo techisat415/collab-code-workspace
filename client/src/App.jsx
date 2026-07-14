@@ -1,10 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import InvitePage from "./pages/InvitePage";
-import Home from "./pages/Home.jsx";
 import EditorPage from "./pages/EditorPage.jsx";
 
 
@@ -26,7 +25,7 @@ function App() {
 
         <Route
           path="/"
-          element={<Home />}
+          element={<Navigate to="/register" replace />}
         />
 
       </Routes>
