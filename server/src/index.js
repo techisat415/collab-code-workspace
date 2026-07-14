@@ -17,15 +17,48 @@ import { verifyToken } from "./utils/jwt.js";
 
 const app = express();
 
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
-const allowedOrigins = CLIENT_ORIGIN.split(",").map((origin) => origin.trim());
+const normalizeOrigin = (origin) => {
+  const trimmed = origin?.trim();
 
-app.use(cors(
-  {
-    origin: allowedOrigins,
-    credentials: true,
+  if (!trimmed) {
+    return null;
   }
-));
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
+};
+
+const configuredOrigins = [
+  process.env.CLIENT_ORIGIN,
+  process.env.CLIENT_ORIGINS,
+  process.env.FRONTEND_URL,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+]
+  .flatMap((value) => (value ? value.split(",") : []))
+  .map(normalizeOrigin)
+  .filter(Boolean);
+
+const allowedOrigins = new Set([
+  "http://localhost:5173",
+  ...configuredOrigins,
+]);
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use("/auth", authRoutes);
@@ -47,7 +80,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: corsOptions.origin,
     methods: ["GET", "POST"],
     credentials: true,
   },
