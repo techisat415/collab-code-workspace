@@ -65,15 +65,11 @@ export default function Login() {
       });
 
       await refreshUser();
-
       navigate("/dashboard");
 
     } catch (err) {
 
-      alert(
-        err.response?.data?.error ||
-        "Login failed"
-      );
+      alert(err.response?.data?.error || "Login failed");
     }
   }
 
@@ -100,7 +96,7 @@ export default function Login() {
         <div className="auth-card">
 
           <h1 className="auth-title">
-            Collaborative IDE
+            Collaborative Workspace
           </h1>
 
           <p className="auth-subtitle">
@@ -108,23 +104,17 @@ export default function Login() {
           </p>
 
           <form
-            className="auth-form"
-            onSubmit={handleSubmit}
-          >
+            className="auth-form" onSubmit={handleSubmit}>
 
             <div className="auth-group">
-              <label className="auth-label">
-                Email
-              </label>
+              <label className="auth-label"> Email</label>
 
               <input
                 className="auth-input"
                 type="email"
                 placeholder="your.email@example.com"
                 value={email}
-                onChange={(e) =>
-                  setEmail(e.target.value)
-                }
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
